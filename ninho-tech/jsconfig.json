@@ -1,0 +1,7 @@
+{
+	"compilerOptions": {
+		"baseUrl": ".",
+	},
+	"include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte", "main.js", "main.js", "vite-env.d.ts", "vite-env.d.ts"],
+	"checkJs": true
+}
