@@ -40,6 +40,7 @@ const LAST_PLAYED_NAME = "svordle_lastPlayedDate"
 const CURRENT_WORD_INDEX_NAME = "svordle_currentWordIndex";
 const CURRENT_LETTER_INDEX_NAME = "svordle_currentLetterIndex";
 const GAME_STATE_NAME = "svordle_gameState";
+const CORRECT_WORD_NAME = "svordle_correctWord";
 
 export default {
     GAME_STATES,
@@ -54,5 +55,6 @@ export default {
     KEYBOARD_ROWS_ARR,
     CURRENT_LETTER_INDEX_NAME,
     CURRENT_WORD_INDEX_NAME,
-    GAME_STATE_NAME
+    GAME_STATE_NAME,
+    CORRECT_WORD_NAME
 }

@@ -32,9 +32,23 @@ const setAndSaveCurrentWordIndex = (index) => {
   currentWordIndex.set(index);
   localStorage.setItem(CONSTANTS.CURRENT_WORD_INDEX_NAME, index);
 }
+
+const setAndSaveCorrectWord = (word) => {
+  localStorage.setItem(CONSTANTS.CORRECT_WORD_NAME, word);
+  correctWord.set(word);
+}
+
 export const setAndSaveGameState = (state) => {
   gameState.set(state);
   localStorage.setItem(CONSTANTS.GAME_STATE_NAME, state);
+}
+
+export const setCurrentPosition = (letterIndex) => {
+  if(get(gameState) === CONSTANTS.GAME_STATES.PLAYING) {
+    // Set the cursor to the clicked position
+    // This allows clicking on any square in the current row
+    setAndSaveCurrentLetterIndex(letterIndex);
+  }
 }
 
 //LOADERS
@@ -55,11 +69,22 @@ const loadLastPlayedDate = () => {
     return null;
 }
 
-const loadCurrentWord = async () => {
-  //TODO: update to consistent hashing algorithm
+const getRandomWord = () => {
   const randomNum = Math.floor(Math.random() * answers.length);
-  console.log(answers[randomNum].toUpperCase());
-  return "SVELT";
+  const selectedWord = answers[randomNum].toUpperCase();
+  console.log("Selected word:", selectedWord);
+  return selectedWord;
+}
+
+const loadCorrectWord = () => {
+    return localStorage.getItem(CONSTANTS.CORRECT_WORD_NAME);
+}
+
+const loadCurrentWord = async () => {
+  const randomNum = Math.floor(Math.random() * answers.length);
+  const selectedWord = answers[randomNum].toUpperCase();
+  console.log("Selected word:", selectedWord);
+  return selectedWord;
 }
 
 const loadUserGuessesArray = () => {
@@ -83,35 +108,77 @@ const loadCurrentWordIndex = () => Number(localStorage.getItem(CONSTANTS.CURRENT
 
 //GAME FUNCTIONALITY
 export const guessLetter = (letter) => {
-    if(letter.length > 1 || get(currentLetterIndex) >= CONSTANTS.MAX_LETTERS) {
+    if(letter.length > 1 || get(currentLetterIndex) >= CONSTANTS.MAX_LETTERS || get(gameState) !== CONSTANTS.GAME_STATES.PLAYING) {
         return;
     }
 
+    const currentPos = get(currentLetterIndex);
+    
     userGuessesArray.update( prev => {
-        prev[get(currentWordIndex)][get(currentLetterIndex)] = letter.toUpperCase();
-        setAndSaveCurrentLetterIndex(get(currentLetterIndex) + 1);
+        prev[get(currentWordIndex)][currentPos] = letter.toUpperCase();
         localStorage.setItem(CONSTANTS.GUESSES_NAME, JSON.stringify(prev));
         return prev;
     })
+
+    // Find the next empty position, skipping over letters that are already written
+    let nextPos = currentPos + 1;
+    const currentGuesses = get(userGuessesArray);
+    const currentWord = currentGuesses[get(currentWordIndex)];
+    
+    // Skip over positions that already have letters
+    while (nextPos < CONSTANTS.MAX_LETTERS && currentWord[nextPos] && currentWord[nextPos].trim() !== '') {
+        nextPos++;
+    }
+    
+    setAndSaveCurrentLetterIndex(nextPos);
+
+    // Auto-check word when all positions are filled
+    if(nextPos >= CONSTANTS.MAX_LETTERS) {
+        setTimeout(() => {
+            guessWord();
+        }, 100); // Small delay to ensure the letter is processed first
+    }
 }
 
 export const deleteLetter = () => {
-    if(get(currentLetterIndex) > 0){
-        userGuessesArray.update( prev => {
-            prev[get(currentWordIndex)][get(currentLetterIndex) - 1] = "";
-            setAndSaveCurrentLetterIndex(get(currentLetterIndex) - 1);
-            return prev;
-        })
+    if(get(gameState) === CONSTANTS.GAME_STATES.PLAYING){
+        const currentGuesses = get(userGuessesArray);
+        const currentWord = currentGuesses[get(currentWordIndex)];
+        
+        // Find the last filled position
+        let lastFilledPos = -1;
+        for (let i = CONSTANTS.MAX_LETTERS - 1; i >= 0; i--) {
+            if (currentWord[i] && currentWord[i].trim() !== '') {
+                lastFilledPos = i;
+                break;
+            }
+        }
+        
+        if (lastFilledPos >= 0) {
+            userGuessesArray.update( prev => {
+                prev[get(currentWordIndex)][lastFilledPos] = "";
+                return prev;
+            })
+            // Set cursor to the position that was just cleared
+            setAndSaveCurrentLetterIndex(lastFilledPos);
+        }
     }
 }
 
-
 export const guessWord = () => {
-    if(get(currentLetterIndex) < CONSTANTS.MAX_LETTERS){
-        return displayAlert('Not enough letters.', ALERT_TYPES.INFO, 2000)
+    if(get(gameState) !== CONSTANTS.GAME_STATES.PLAYING){
+        return;
     }
+    
     const guessesArr = get(userGuessesArray);
     const currentGuessArray = guessesArr[get(currentWordIndex)];
+    
+    // Check if all 5 positions have letters (no blanks)
+    const hasAllLetters = currentGuessArray.every(letter => letter && letter.trim() !== '');
+    if (!hasAllLetters) {
+        return displayAlert('Por favor, preencha todos os 5 espaços.', ALERT_TYPES.INFO, 2000);
+    }
+    
     const guessStr = currentGuessArray.join('');
 
     // if(!guesses.includes(guessStr.toLowerCase())){
@@ -142,10 +209,12 @@ const getUpdatedGameState = (guessStr, wordIndex) => {
 }
 
 const displayFeedback = (state) => { 
+  const correctWordStr = get(correctWord);
+  
   if(state === CONSTANTS.GAME_STATES.WIN) {
-    displayAlert('Congratulations, you win!', ALERT_TYPES.SUCCESS)
+    displayAlert(`Parabéns! Você ganhou! A palavra era: ${correctWordStr}`, ALERT_TYPES.SUCCESS)
   }else if(state === CONSTANTS.GAME_STATES.LOSE){
-        displayAlert('Sorry, but you lost.', ALERT_TYPES.DANGER)
+    displayAlert(`Que pena! Você perdeu. A palavra era: ${correctWordStr}`, ALERT_TYPES.DANGER)
   }
 }
 
@@ -158,30 +227,34 @@ const generateEmptyGuessesArray = () => {
 }
 
 export const initializeGame = async () => {
-  correctWord.set(await loadCurrentWord())
-  letterStatuses.set(generateInitialLetterStatuses());
+    const id = loadUserId() || uuidv4();
+    setAndSaveUserId(id);
 
-  const loadedUserId = loadUserId();
-  if(!loadedUserId) {
-    setAndSaveUserId(uuidv4());      
-    return resetGame(true);    
-  }
-  setAndSaveUserId(loadedUserId);
+    const loadedState = loadGameState();
 
-  const loadedLastPlayedDate = loadLastPlayedDate();    
-    if(!hasAlreadyPlayedToday(loadedLastPlayedDate)){
-      return resetGame(false);
-  }
+    if (loadedState === CONSTANTS.GAME_STATES.NEW_PLAYER) {
+        return resetGame(true);
+    }
+    
+    const lastPlayed = loadLastPlayedDate();
+    const today = new Date();
 
-  setAndSaveCurrentLetterIndex(loadCurrentLetterIndex());
-  setAndSaveCurrentWordIndex(loadCurrentWordIndex());
-  setAndSaveUserGuessesArray(loadUserGuessesArray());
-  updateLetterStatuses(get(userGuessesArray), get(correctWord));
-  const loadedState = loadGameState();
-  setAndSaveGameState(loadedState);
-  displayFeedback(loadedState);
+    if (!lastPlayed || lastPlayed.getDate() !== today.getDate()) {
+        return resetGame(false);
+    }
 
-}
+    const savedWord = loadCorrectWord();
+    if (!savedWord) {
+        return resetGame(false);
+    }
+
+    correctWord.set(savedWord);
+    userGuessesArray.set(loadUserGuessesArray());
+    currentWordIndex.set(loadCurrentWordIndex());
+    currentLetterIndex.set(loadCurrentLetterIndex());
+    gameState.set(loadedState);
+    updateLetterStatuses(get(userGuessesArray), get(correctWord));
+};
 
 const updateLetterStatuses = (guessesArray, correctWord) => {
   letterStatuses.update(prevLetterStatuses => {
@@ -212,26 +285,27 @@ const generateInitialLetterStatuses = () => {
   return initialLetterStatuses;
 }
 
-const resetGame = (newPlayer = false) => {
-  setAndSaveCurrentLetterIndex(0);
-  setAndSaveCurrentWordIndex(0);
-  setAndSaveUserGuessesArray(generateEmptyGuessesArray());
-  updateLetterStatuses(get(userGuessesArray), get(correctWord));
-  if(newPlayer){
-    setAndSaveGameState(CONSTANTS.GAME_STATES.NEW_PLAYER)
-  }else {
-    setAndSaveGameState(CONSTANTS.GAME_STATES.PLAYING)
-  }
+export const resetGame = async (isNewPlayer = false) => {
+    setAndSaveCorrectWord(getRandomWord());
+    setAndSaveCurrentLetterIndex(0);
+    setAndSaveCurrentWordIndex(0);
+    setAndSaveUserGuessesArray(generateEmptyGuessesArray());
+    updateLetterStatuses(get(userGuessesArray), get(correctWord));
+    if(isNewPlayer){
+      setAndSaveGameState(CONSTANTS.GAME_STATES.NEW_PLAYER)
+    }else {
+      setAndSaveGameState(CONSTANTS.GAME_STATES.PLAYING)
+    }
 }
 
-const hasAlreadyPlayedToday = (lastPlayed) => {
-  if(!lastPlayed) return false;
+// const hasAlreadyPlayedToday = (lastPlayed) => {
+//   if(!lastPlayed) return false;
 
-  const today = new Date();
-  return (lastPlayed.getFullYear() === today.getFullYear() &&
-    lastPlayed.getDate() === today.getDate() &&
-    lastPlayed.getMonth() === today.getMonth());
-} 
+//   const today = new Date();
+//   return (lastPlayed.getFullYear() === today.getFullYear() &&
+//     lastPlayed.getDate() === today.getDate() &&
+//     lastPlayed.getMonth() === today.getMonth());
+// }
 
 
 

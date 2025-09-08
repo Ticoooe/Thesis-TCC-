@@ -107,9 +107,6 @@ export const deleteLetter = () => {
 
 
 export const guessWord = () => {
-    if(get(currentLetterIndex) < CONSTANTS.MAX_LETTERS){
-        return displayAlert('Not enough letters.', ALERT_TYPES.INFO, 2000)
-    }
     const guessesArr = get(userGuessesArray);
     const currentGuessArray = guessesArr[get(currentWordIndex)];
     const guessStr = currentGuessArray.join('');

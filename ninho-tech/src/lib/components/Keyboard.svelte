@@ -21,7 +21,7 @@
     <div class="flex gap-2 justify-center mb-2">
         {#each row as letter }
             <button on:click={() => handleClick(letter)} 
-                class={`p-2 h-10 rounded-md flex items-center justify-center border-2 border-gray-100 ${bgClass(letter)}`}>{letter}
+                class={`p-3 h-12 rounded-md flex items-center justify-center border-2 border-gray-100 text-lg font-semibold ${bgClass(letter)}`}>{letter}
             </button>
         {/each}
         </div>

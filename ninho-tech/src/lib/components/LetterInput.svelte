@@ -3,7 +3,7 @@
     export let letterIndex;
     export let wordIndex;
     import { fade } from 'svelte/transition';
-    import { correctWord, currentLetterIndex, currentWordIndex } from "../../lib/stores/gameStore";
+    import { correctWord, currentLetterIndex, currentWordIndex, setCurrentPosition } from "../../lib/stores/gameStore";
 
     $: bgClass = () => {
         const showResults = wordIndex < $currentWordIndex;
@@ -18,16 +18,26 @@
             return "bg-transparent"
         }
     }
+
+    const handleClick = () => {
+        // Only allow clicking on the current word row
+        console.log('Click detected:', { wordIndex, letterIndex, currentWordIndex: $currentWordIndex, currentLetterIndex: $currentLetterIndex });
+        if (wordIndex === $currentWordIndex) {
+            setCurrentPosition(letterIndex);
+        }
+    }
 </script>
 {#if wordIndex < $currentWordIndex }
 <div class={`w-14 h-14 ${bgClass()} flex items-center justify-center`} in:fade={{ delay: 100 * letterIndex }}>
     <span  class={`text-4xl font-bold`}>{letter}</span>  
 </div>
-{:else if letterIndex < $currentLetterIndex && wordIndex === $currentWordIndex}
-<div class="w-14 h-14 border-2 border-gray-600  flex items-center justify-center">
+{:else if wordIndex === $currentWordIndex}
+<!-- Current row - all squares should be clickable -->
+<div class="w-14 h-14 border-2 border-gray-600 cursor-pointer hover:border-gray-400 transition-colors flex items-center justify-center" on:click={handleClick} on:keydown={(e) => e.key === 'Enter' && handleClick()} role="button" tabindex="0">
     <span class="text-4xl font-bold" in:fade={{}}>{letter}</span>          
 </div>
 {:else}
-    <span class="w-14 h-14 border-2 border-gray-600" >{letter}</span>          
+<!-- Future rows - not clickable -->
+<span class="w-14 h-14 border-2 border-gray-600">{letter}</span>          
 {/if}
     

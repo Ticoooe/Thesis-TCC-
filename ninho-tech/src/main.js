@@ -1,5 +1,5 @@
-import './app.css';
-import App from './src/routes/+layout.svelte';
+import '../app.css';
+import App from './routes/+layout.svelte';
 
 const target = document.getElementById('svelte');
 
