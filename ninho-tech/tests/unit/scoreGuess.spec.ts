@@ -36,6 +36,36 @@ describe('scoreGuess', () => {
     });
   });
 
+  describe('User-specific case: Repeated letters in guess, not enough in target', () => {
+    it('should correctly mark extra letters as absent', () => {
+      // Target: JOGAR (1 'A')
+      // Guess:  ARARA (3 'A's)
+      // Expected: A(present), R(present), A(absent), R(correct), A(absent) -> Wait, R is not correct.
+      // Let's re-trace:
+      // Target: J O G A R
+      // Guess:  A R A R A
+      // Correct pass: none.
+      // Present pass:
+      // Guess A at 0 -> present, JOGAR has one A. A count becomes 0.
+      // Guess R at 1 -> present, JOGAR has one R. R count becomes 0.
+      // Guess A at 2 -> absent, JOGAR has no more As.
+      // Guess R at 3 -> absent, JOGAR has no more Rs.
+      // Guess A at 4 -> absent, JOGAR has no more As.
+      // So, the result for 'ARARA' should be ['present', 'present', 'absent', 'absent', 'absent']
+      expect(scoreGuess('JOGAR', 'ARARA')).toEqual(['present', 'present', 'absent', 'absent', 'absent']);
+    });
+
+    it('should handle one correct, one present, one absent for letter E', () => {
+      // Target: VERDE (2 'E's)
+      // Guess:  ERESE (3 'E's)
+      // Correct pass: E at pos 2 is correct. Target E count becomes 1.
+      // Present pass:
+      // Guess E at pos 0 -> present. Target E count becomes 0.
+      // Guess E at pos 4 -> absent. No more Es in target.
+      expect(scoreGuess('VERDE', 'ERESE')).toEqual(['present', 'absent', 'correct', 'absent', 'absent']);
+    });
+  });
+
   describe('No letters present', () => {
     it('should return all absent when no letters match', () => {
       expect(scoreGuess('CASAS', 'PATOZ')).toEqual(['absent', 'absent', 'absent', 'absent', 'absent']);
@@ -73,6 +103,10 @@ describe('scoreGuess', () => {
   describe('5-letter word validation', () => {
     it('should throw error for 4-letter words', () => {
       expect(() => scoreGuess('CASA', 'CASA')).toThrow('Only 5-letter words are supported. Target: 4, Guess: 4');
+    });
+
+    it('should not throw error for 5-letter words', () => {
+      expect(() => scoreGuess('CASAS', 'CASAS')).not.toThrow();
     });
 
     it('should throw error for 6-letter words', () => {
