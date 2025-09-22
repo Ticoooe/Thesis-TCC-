@@ -6,14 +6,23 @@
   import Keyboard from "../lib/components/Keyboard.svelte";
   import NewPlayerInfo from "../lib/components/NewPlayerInfo.svelte";
   import Overlay from "../lib/components/Overlay.svelte";
-  import WordInput from "../lib/components/WordInput.svelte";
-  import { deleteLetter, gameState, guessLetter, guessWord, initializeGame } from "../lib/stores/gameStore";
+  import LetterInput from "../lib/components/LetterInput.svelte";
+  import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, userGuessesArray } from "../lib/stores/gameStore";
   import CONSTANTS from "../lib/utils/constants";
     
     let loaded = false;
     let showInstructions = true;
 
     onMount(async () => {
+        // Clear storage on every page load to ensure a fresh start
+        localStorage.removeItem(CONSTANTS.ID_NAME);
+        localStorage.removeItem(CONSTANTS.GUESSES_NAME);
+        localStorage.removeItem(CONSTANTS.LAST_PLAYED_NAME);
+        localStorage.removeItem(CONSTANTS.CURRENT_WORD_INDEX_NAME);
+        localStorage.removeItem(CONSTANTS.CURRENT_LETTER_INDEX_NAME);
+        localStorage.removeItem(CONSTANTS.GAME_STATE_NAME);
+        localStorage.removeItem(CONSTANTS.CORRECT_WORD_NAME);
+
         await initializeGame();
         loaded = true;
     })
@@ -87,9 +96,11 @@
     <div class="flex flex-col gap-y-1 max-w-2xl h-full justify-between items-center">
       <Alert/>
       <div class="grow">
-        {#each Array(CONSTANTS.MAX_GUESSES) as _, i}
-          <div class="flex  mx-auto space-x-1 mb-1 text-white">
-            <WordInput index={i} />
+        {#each $userGuessesArray as lettersArr, i}
+          <div class="flex mx-auto space-x-1 mb-1 text-white">
+            {#each lettersArr as letter, j}
+              <LetterInput letter={letter} wordIndex={i} letterIndex={j} />
+            {/each}
           </div>
         {/each}
       </div>

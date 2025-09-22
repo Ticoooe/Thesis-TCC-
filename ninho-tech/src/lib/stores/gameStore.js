@@ -141,26 +141,34 @@ export const guessLetter = (letter) => {
 }
 
 export const deleteLetter = () => {
-    if(get(gameState) === CONSTANTS.GAME_STATES.PLAYING){
-        const currentGuesses = get(userGuessesArray);
-        const currentWord = currentGuesses[get(currentWordIndex)];
-        
-        // Find the last filled position
-        let lastFilledPos = -1;
-        for (let i = CONSTANTS.MAX_LETTERS - 1; i >= 0; i--) {
-            if (currentWord[i] && currentWord[i].trim() !== '') {
-                lastFilledPos = i;
-                break;
-            }
-        }
-        
-        if (lastFilledPos >= 0) {
-            userGuessesArray.update( prev => {
-                prev[get(currentWordIndex)][lastFilledPos] = "";
+    if(get(gameState) !== CONSTANTS.GAME_STATES.PLAYING) {
+        return;
+    }
+
+    const letterIndex = get(currentLetterIndex);
+    const currentWord = get(userGuessesArray)[get(currentWordIndex)];
+
+    // If the cursor is on a square that already has a letter, delete that letter
+    // and effectively "deselect" all squares by moving the cursor out of bounds.
+    if (letterIndex < CONSTANTS.MAX_LETTERS && currentWord[letterIndex] && currentWord[letterIndex].trim() !== '') {
+        userGuessesArray.update(prev => {
+            prev[get(currentWordIndex)][letterIndex] = "";
+            return prev;
+        });
+
+        // Move cursor to a non-existent index to remove the highlight from all squares.
+        setAndSaveCurrentLetterIndex(CONSTANTS.MAX_LETTERS);
+
+    } else {
+        // Otherwise, behave like a standard backspace, deleting the character before the cursor.
+        const posToDelete = letterIndex - 1;
+        if (posToDelete >= 0) {
+            userGuessesArray.update(prev => {
+                prev[get(currentWordIndex)][posToDelete] = "";
                 return prev;
-            })
-            // Set cursor to the position that was just cleared
-            setAndSaveCurrentLetterIndex(lastFilledPos);
+            });
+            // Move the cursor to the now-empty position.
+            setAndSaveCurrentLetterIndex(posToDelete);
         }
     }
 }

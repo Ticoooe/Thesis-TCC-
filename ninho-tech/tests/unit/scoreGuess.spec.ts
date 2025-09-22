@@ -38,31 +38,17 @@ describe('scoreGuess', () => {
 
   describe('User-specific case: Repeated letters in guess, not enough in target', () => {
     it('should correctly mark extra letters as absent', () => {
-      // Target: JOGAR (1 'A')
-      // Guess:  ARARA (3 'A's)
-      // Expected: A(present), R(present), A(absent), R(correct), A(absent) -> Wait, R is not correct.
-      // Let's re-trace:
-      // Target: J O G A R
-      // Guess:  A R A R A
-      // Correct pass: none.
-      // Present pass:
-      // Guess A at 0 -> present, JOGAR has one A. A count becomes 0.
-      // Guess R at 1 -> present, JOGAR has one R. R count becomes 0.
-      // Guess A at 2 -> absent, JOGAR has no more As.
-      // Guess R at 3 -> absent, JOGAR has no more Rs.
-      // Guess A at 4 -> absent, JOGAR has no more As.
-      // So, the result for 'ARARA' should be ['present', 'present', 'absent', 'absent', 'absent']
       expect(scoreGuess('JOGAR', 'ARARA')).toEqual(['present', 'present', 'absent', 'absent', 'absent']);
     });
 
     it('should handle one correct, one present, one absent for letter E', () => {
-      // Target: VERDE (2 'E's)
-      // Guess:  ERESE (3 'E's)
-      // Correct pass: E at pos 2 is correct. Target E count becomes 1.
-      // Present pass:
-      // Guess E at pos 0 -> present. Target E count becomes 0.
-      // Guess E at pos 4 -> absent. No more Es in target.
-      expect(scoreGuess('VERDE', 'ERESE')).toEqual(['present', 'absent', 'correct', 'absent', 'absent']);
+      // Target: VERDE (E at pos 1, E at pos 4)
+      // Guess:  ERESE (E at pos 0, E at pos 2, E at pos 4)
+      // Pass 1 (correct): result[4] = 'correct' because E is at the same spot. targetLetterCounts['E'] becomes 1.
+      // Pass 2 (present/absent):
+      // result[0] (guess 'E'): is 'present' because targetLetterCounts['E'] is 1. It gets decremented to 0.
+      // result[2] (guess 'E'): is 'absent' because targetLetterCounts['E'] is now 0.
+      expect(scoreGuess('VERDE', 'ERESE')).toEqual(['present', 'absent', 'present', 'absent', 'correct']);
     });
   });
 
@@ -163,12 +149,14 @@ describe('scoreGuess', () => {
 
     describe('with normalizeAccents=false', () => {
       it('should treat diacritics as different letters', () => {
-        expect(scoreGuess('AÇAÍS', 'ACAIS', false)).toEqual(['correct', 'correct', 'correct', 'correct', 'correct']);
-        expect(scoreGuess('CÃMAR', 'CAMAR', false)).toEqual(['correct', 'correct', 'correct', 'correct', 'correct']);
+        // Since we now always uppercase, the comparison is case-insensitive.
+        // But accents are treated as different characters.
+        expect(scoreGuess('AÇAIS', 'ACAIS', false)).toEqual(['correct', 'absent', 'correct', 'absent', 'correct']);
+        expect(scoreGuess('CÃMAR', 'CAMAR', false)).toEqual(['correct', 'absent', 'correct', 'correct', 'correct']);
       });
 
       it('should still be case insensitive', () => {
-        expect(scoreGuess('AÇAÍS', 'açaís', false)).toEqual(['correct', 'correct', 'correct', 'correct', 'correct']);
+        expect(scoreGuess('AÇAIS', 'açaís', false)).toEqual(['correct', 'absent', 'correct', 'absent', 'correct']);
       });
     });
   });

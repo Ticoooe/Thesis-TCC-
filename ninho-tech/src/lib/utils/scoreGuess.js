@@ -7,73 +7,63 @@
  * @throws {Error} If target and guess have different lengths
  */
 export function scoreGuess(target, guess, normalizeAccents = true) {
-	// Always convert to uppercase first for consistent case handling
-	const upperTarget = target.toUpperCase();
-	const upperGuess = guess.toUpperCase();
+  // Normalize inputs first
+  const normalizedTarget = normalizeAccents ? normalizeWord(target) : target.toUpperCase();
+  const normalizedGuess = normalizeAccents ? normalizeWord(guess) : guess.toUpperCase();
+  
+  // Basic validation
+  if (normalizedTarget.length !== normalizedGuess.length) {
+    throw new Error(`Target and guess must have the same length.`);
+  }
+  if (normalizedTarget.length !== 5) {
+    throw new Error(`Only 5-letter words are supported.`);
+  }
+  
+  const result = new Array(normalizedTarget.length).fill(null);
+  const targetLetterCounts = {};
 
-	// Normalize inputs if required
-	const normalizedTarget = normalizeAccents ? normalizeWord(upperTarget) : upperTarget;
-	const normalizedGuess = normalizeAccents ? normalizeWord(upperGuess) : upperGuess;
+  // Count letters in the target word for accurate 'present' scoring
+  for (const letter of normalizedTarget) {
+    targetLetterCounts[letter] = (targetLetterCounts[letter] || 0) + 1;
+  }
 
-	// Check lengths
-	if (normalizedTarget.length !== normalizedGuess.length) {
-		throw new Error(
-			`Target and guess must have the same length. Target: ${target.length}, Guess: ${guess.length}`
-		);
-	}
+  // First pass: mark 'correct' letters (green)
+  // This pass is crucial to ensure 'correct' letters are prioritized over 'present' ones.
+  for (let i = 0; i < normalizedGuess.length; i++) {
+    if (normalizedGuess[i] === normalizedTarget[i]) {
+      result[i] = 'correct';
+      targetLetterCounts[normalizedGuess[i]]--;
+    }
+  }
 
-	// Only accept 5-letter words
-	if (normalizedTarget.length !== 5) {
-		throw new Error(
-			`Only 5-letter words are supported. Target: ${target.length}, Guess: ${guess.length}`
-		);
-	}
+  // Second pass: mark 'present' (yellow) and 'absent' (gray) letters
+  // This pass handles the remaining letters.
+  for (let i = 0; i < normalizedGuess.length; i++) {
+    // Skip letters that are already marked as 'correct'
+    if (result[i] === 'correct') {
+      continue;
+    }
 
-	const result = new Array(normalizedTarget.length);
-	const targetLetterCounts = {};
-
-	// Count letters in the target word
-	for (const letter of normalizedTarget) {
-		targetLetterCounts[letter] = (targetLetterCounts[letter] || 0) + 1;
-	}
-
-	// First pass: mark correct positions
-	for (let i = 0; i < normalizedGuess.length; i++) {
-		if (normalizedGuess[i] === normalizedTarget[i]) {
-			result[i] = 'correct';
-			targetLetterCounts[normalizedGuess[i]]--;
-		}
-	}
-
-	// Second pass: mark present and absent letters
-	for (let i = 0; i < normalizedGuess.length; i++) {
-		if (result[i] === 'correct') {
-			continue;
-		}
-
-		if (targetLetterCounts[normalizedGuess[i]] > 0) {
-			result[i] = 'present';
-			targetLetterCounts[normalizedGuess[i]]--;
-		} else {
-			result[i] = 'absent';
-		}
-	}
-
-	return result;
+    // If the letter exists in the target and we haven't used all of them up
+    if (targetLetterCounts[normalizedGuess[i]] > 0) {
+      result[i] = 'present';
+      targetLetterCounts[normalizedGuess[i]]--;
+    } else {
+      result[i] = 'absent';
+    }
+  }
+  
+  return result;
 }
 
 /**
  * Normalizes Portuguese words by removing accents and converting to uppercase
- * @param {string} word - The word to normalize (should already be uppercased)
+ * @param {string} word - The word to normalize
  * @returns {string} Normalized word
  */
 function normalizeWord(word) {
-	return word
-  .toUpperCase()
-  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  .replace(/Ç/g, 'C')
-  .replace(/Ã/g, 'A')
-  .replace(/Õ/g, 'O')
-  .replace(/Ê/g, 'E')
-  .replace(/Ô/g, 'O');
+  return word
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
