@@ -4,7 +4,6 @@
   import Alert from "../lib/components/Alert.svelte";
   import InstructionsSidebar from "../lib/components/InstructionsSidebar.svelte";
   import Keyboard from "../lib/components/Keyboard.svelte";
-  import NewPlayerInfo from "../lib/components/NewPlayerInfo.svelte";
   import Overlay from "../lib/components/Overlay.svelte";
   import LetterInput from "../lib/components/LetterInput.svelte";
   import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, userGuessesArray } from "../lib/stores/gameStore";
@@ -89,7 +88,7 @@
       </h1>
       <br/>
       <h1 class="text-4xl font-extrabold text-center whitespace-nowrap font-display">
-        Word Game
+        Ninho de Letras
       </h1>
     </div>
     
