@@ -80,13 +80,6 @@ const loadCorrectWord = () => {
     return localStorage.getItem(CONSTANTS.CORRECT_WORD_NAME);
 }
 
-const loadCurrentWord = async () => {
-  const randomNum = Math.floor(Math.random() * answers.length);
-  const selectedWord = answers[randomNum].toUpperCase();
-  console.log("Selected word:", selectedWord);
-  return selectedWord;
-}
-
 const loadUserGuessesArray = () => {
     const userGuessesStr = localStorage.getItem(CONSTANTS.GUESSES_NAME);
     try {
@@ -189,8 +182,8 @@ export const guessWord = () => {
     
     const guessStr = currentGuessArray.join('');
 
-    // if(!guesses.includes(guessStr.toLowerCase())){
-    //     return displayAlert('Not a word in the list.', ALERT_TYPES.INFO, 2000);
+    // if(!guessesArr.includes(guessStr.toLowerCase())){
+    //     return displayAlert('Não é uma palavra válida.', ALERT_TYPES.INFO, 2000);
     // }
 
     const updatedGameState = getUpdatedGameState(guessStr, get(currentWordIndex));
@@ -245,10 +238,12 @@ export const initializeGame = async () => {
     }
     
     const lastPlayed = loadLastPlayedDate();
-    const today = new Date();
 
-    if (!lastPlayed || lastPlayed.getDate() !== today.getDate()) {
-        return resetGame(false);
+    localStorage.setItem(CONSTANTS.LAST_PLAYED_NAME, new Date().toISOString());
+
+    const sameDay = (a, b) => a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+    if (!lastPlayed || !sameDay(lastPlayed, new Date())) {
+      return resetGame(false); 
     }
 
     const savedWord = loadCorrectWord();
@@ -268,16 +263,18 @@ const updateLetterStatuses = (guessesArray, correctWord) => {
   letterStatuses.update(prevLetterStatuses => {
     guessesArray.forEach( singleGuessArray => {
       singleGuessArray.forEach((letter, i) => {
-        if(prevLetterStatuses[letter] === CONSTANTS.LETTER_STATES.CORRECT_SPOT){
+        const l = (letter || '').toUpperCase();
+        if(!l) return;
+        if(prevLetterStatuses[l] === CONSTANTS.LETTER_STATES.CORRECT_SPOT){
           return;
         }
-        if(letter.toUpperCase() === correctWord[i]){
-          prevLetterStatuses[letter] =  CONSTANTS.LETTER_STATES.CORRECT_SPOT;
-        }else if( correctWord.includes(letter)){
-          prevLetterStatuses[letter] = CONSTANTS.LETTER_STATES.WRONG_SPOT;
+        if(l === correctWord[i]){
+          prevLetterStatuses[l] =  CONSTANTS.LETTER_STATES.CORRECT_SPOT;
+        }else if( correctWord.includes(l)){
+          prevLetterStatuses[l] = CONSTANTS.LETTER_STATES.WRONG_SPOT;
         }
         else{
-          prevLetterStatuses[letter] = CONSTANTS.LETTER_STATES.NOT_FOUND
+          prevLetterStatuses[l] = CONSTANTS.LETTER_STATES.NOT_FOUND
         }
       })
     })
@@ -298,6 +295,7 @@ export const resetGame = async (isNewPlayer = false) => {
     setAndSaveCurrentLetterIndex(0);
     setAndSaveCurrentWordIndex(0);
     setAndSaveUserGuessesArray(generateEmptyGuessesArray());
+    letterStatuses.set(generateInitialLetterStatuses());
     updateLetterStatuses(get(userGuessesArray), get(correctWord));
     if(isNewPlayer){
       setAndSaveGameState(CONSTANTS.GAME_STATES.NEW_PLAYER)
@@ -314,6 +312,3 @@ export const resetGame = async (isNewPlayer = false) => {
 //     lastPlayed.getDate() === today.getDate() &&
 //     lastPlayed.getMonth() === today.getMonth());
 // }
-
-
-
