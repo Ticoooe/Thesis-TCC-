@@ -16,7 +16,7 @@ const VALID_WORDS = [
 ];
 
 const OFFENSIVE_WORDS = [
-  'IDIOTA', 'BURRO', 'TOLO', 'BESTA', 'ASNO', 'IMBECIL'
+  'BURRO', 'BESTA',
 ];
 
 // Cache for loaded dictionaries

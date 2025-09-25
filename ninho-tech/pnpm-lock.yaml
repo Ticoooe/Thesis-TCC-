@@ -11,6 +11,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.0.12
         version: 4.0.12(vite@6.2.0(jiti@2.4.2)(lightningcss@1.29.2))
+      openai:
+        specifier: ^5.23.0
+        version: 5.23.0(ws@8.18.3)
       tailwindcss:
         specifier: ^4.0.12
         version: 4.0.12
@@ -946,6 +949,18 @@ packages:
 
   nwsapi@2.2.21:
     resolution: {integrity: sha512-o6nIY3qwiSXl7/LuOU0Dmuctd34Yay0yeuZRLFmDPrrdHpXKFndPj3hM+YEPVHYC5fx2otBx4Ilc/gyYSAUaIA==}
+
+  openai@5.23.0:
+    resolution: {integrity: sha512-Cfq155NHzI7VWR67LUNJMIgPZy2oSh7Fld/OKhxq648BiUjELAvcge7g30xJ6vAfwwXf6TVK0KKuN+3nmIJG/A==}
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.23.8
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
 
   parse5@7.3.0:
     resolution: {integrity: sha512-IInvU7fabl34qmi9gY8XOVxhYyMyuH2xUNpb2q8/Y+7552KlejkRvqvD19nMoUW/uQGGbqNpA6Tufu5FL5BZgw==}
@@ -1955,6 +1970,10 @@ snapshots:
   nanoid@3.3.8: {}
 
   nwsapi@2.2.21: {}
+
+  openai@5.23.0(ws@8.18.3):
+    optionalDependencies:
+      ws: 8.18.3
 
   parse5@7.3.0:
     dependencies:

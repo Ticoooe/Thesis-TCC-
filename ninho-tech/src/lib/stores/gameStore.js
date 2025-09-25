@@ -1,16 +1,25 @@
 import { get, writable } from "svelte/store";
 import { v4 as uuidv4 } from 'uuid';
 import answers from "../../lib/utils/answers.js";
+import allowedGuesses from "../../lib/utils/allowedGuesses.js";
 import CONSTANTS from "../../lib/utils/constants.js";
 import { ALERT_TYPES, displayAlert } from "./alertStore.js";
+import { fetchDefinition } from "../api/definition.js";
 
 export const correctWord = writable();
+export const wordDefinition = writable(null);
 export const userGuessesArray = writable([]);
 export const currentWordIndex = writable(0);
 export const currentLetterIndex = writable(0);
 export const gameState = writable(CONSTANTS.GAME_STATES.PLAYING);
 export const letterStatuses = writable({});
 const userId = writable();
+
+const normalize = (word = "") => word.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const allowedWordSet = new Set([
+  ...answers.map((word) => normalize(word)),
+  ...allowedGuesses.map((word) => normalize(word)),
+]);
 
 //SETTERS
 const setAndSaveUserId = (id) => {
@@ -181,20 +190,36 @@ export const guessWord = () => {
     }
     
     const guessStr = currentGuessArray.join('');
+    const normalizedGuess = normalize(guessStr);
 
-    // if(!guessesArr.includes(guessStr.toLowerCase())){
-    //     return displayAlert('Não é uma palavra válida.', ALERT_TYPES.INFO, 2000);
-    // }
+    if (!allowedWordSet.has(normalizedGuess)) {
+        return displayAlert('Escreva uma palavra válida.', ALERT_TYPES.INFO, 2000);
+    }
 
     const updatedGameState = getUpdatedGameState(guessStr, get(currentWordIndex));
     setAndSaveGameState(updatedGameState);
     displayFeedback(updatedGameState);
+
+    if (updatedGameState !== CONSTANTS.GAME_STATES.PLAYING) {
+        getWordDefinition();
+    }
 
     setAndSaveCurrentWordIndex(get(currentWordIndex) + 1);
     setAndSaveCurrentLetterIndex(0);
     updateLetterStatuses(guessesArr, get(correctWord));
     
     localStorage.setItem(CONSTANTS.LAST_PLAYED_NAME, new Date());
+}
+
+export const getWordDefinition = async () => {
+    if (get(wordDefinition)) return;
+
+    try {
+        const definition = await fetchDefinition(get(correctWord));
+        wordDefinition.set(definition);
+    } catch (e) {
+        displayAlert(e.message, ALERT_TYPES.DANGER);
+    }
 }
 
 const getUpdatedGameState = (guessStr, wordIndex) => {
