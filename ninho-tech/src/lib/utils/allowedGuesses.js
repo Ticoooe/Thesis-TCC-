@@ -1648,7 +1648,6 @@ export default [
   "sotao",
   "sousa",
   "souza",
-  "split",
   "spray",
   "stand",
   "suave",
@@ -1850,6 +1849,7 @@ export default [
   "vasta",
   "vasto",
   "vazao",
+  "ureia",
   "vazar",
   "vazia",
   "vazio",
@@ -1952,5 +1952,8 @@ export default [
   "ziper",
   "zorra",
   "zorro",
-  "zumbi"
+  "zumbi",
+  "netos",
+  "mesas",
+  "cinco",
 ]

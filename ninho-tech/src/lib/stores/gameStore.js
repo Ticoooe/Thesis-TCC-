@@ -21,6 +21,8 @@ const allowedWordSet = new Set([
   ...allowedGuesses.map((word) => normalize(word)),
 ]);
 
+const getLetterKey = (letter = "") => normalize(letter).toUpperCase();
+
 //SETTERS
 const setAndSaveUserId = (id) => {
     localStorage.setItem(CONSTANTS.ID_NAME, id)
@@ -223,7 +225,10 @@ export const getWordDefinition = async () => {
 }
 
 const getUpdatedGameState = (guessStr, wordIndex) => {
-    if(guessStr === get(correctWord)){
+    const normalizedGuess = normalize(guessStr);
+    const normalizedCorrect = normalize(get(correctWord));
+
+    if(normalizedGuess === normalizedCorrect){
         return CONSTANTS.GAME_STATES.WIN;
         
     }else if(wordIndex === CONSTANTS.MAX_GUESSES - 1){
@@ -284,22 +289,25 @@ export const initializeGame = async () => {
     updateLetterStatuses(get(userGuessesArray), get(correctWord));
 };
 
-const updateLetterStatuses = (guessesArray, correctWord) => {
+const updateLetterStatuses = (guessesArray, correctWordValue) => {
+  const normalizedCorrect = normalize(correctWordValue || "");
   letterStatuses.update(prevLetterStatuses => {
-    guessesArray.forEach( singleGuessArray => {
+    guessesArray.forEach(singleGuessArray => {
       singleGuessArray.forEach((letter, i) => {
-        const l = (letter || '').toUpperCase();
-        if(!l) return;
-        if(prevLetterStatuses[l] === CONSTANTS.LETTER_STATES.CORRECT_SPOT){
+        const key = getLetterKey(letter);
+        if(!key) return;
+        if(prevLetterStatuses[key] === CONSTANTS.LETTER_STATES.CORRECT_SPOT){
           return;
         }
-        if(l === correctWord[i]){
-          prevLetterStatuses[l] =  CONSTANTS.LETTER_STATES.CORRECT_SPOT;
-        }else if( correctWord.includes(l)){
-          prevLetterStatuses[l] = CONSTANTS.LETTER_STATES.WRONG_SPOT;
+        const normalizedGuessLetter = normalize(letter || "");
+        const correctLetterNormalized = normalizedCorrect[i] || "";
+        if(normalizedGuessLetter === correctLetterNormalized){
+          prevLetterStatuses[key] =  CONSTANTS.LETTER_STATES.CORRECT_SPOT;
+        }else if( normalizedCorrect.includes(normalizedGuessLetter)){
+          prevLetterStatuses[key] = CONSTANTS.LETTER_STATES.WRONG_SPOT;
         }
         else{
-          prevLetterStatuses[l] = CONSTANTS.LETTER_STATES.NOT_FOUND
+          prevLetterStatuses[key] = CONSTANTS.LETTER_STATES.NOT_FOUND
         }
       })
     })

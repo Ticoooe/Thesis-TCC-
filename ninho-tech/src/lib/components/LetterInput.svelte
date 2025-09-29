@@ -5,10 +5,15 @@
     import { fade } from 'svelte/transition';
     import { correctWord, currentLetterIndex, currentWordIndex, setCurrentPosition, userGuessesArray } from "../../lib/stores/gameStore";
 
-    // Estados derivados (mesma lógica, só mais explícito)
+    const stripAccents = (value = '') => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const normalizeLetter = (value = '') => stripAccents(value).toUpperCase();
+
+    $: normalizedCorrectWord = ($correctWord || '').split('').map(normalizeLetter).join('');
+    $: normalizedLetter = normalizeLetter(letter || '');
+
     $: showResults = wordIndex < $currentWordIndex;
-    $: isExactMatch = showResults && letter === $correctWord?.[letterIndex]?.toUpperCase?.();
-    $: isPresent = showResults && !isExactMatch && $correctWord?.toUpperCase?.().includes?.(letter);
+    $: isExactMatch = showResults && normalizedLetter === normalizedCorrectWord[letterIndex];
+    $: isPresent = showResults && !isExactMatch && normalizedCorrectWord.includes(normalizedLetter);
 
     $: bgClass = () => {
     if (isExactMatch) return "bg-green-500";
