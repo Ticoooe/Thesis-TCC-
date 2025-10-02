@@ -62,6 +62,66 @@ export const setCurrentPosition = (letterIndex) => {
   }
 }
 
+const getCurrentWord = () => {
+  const guesses = get(userGuessesArray) || [];
+  return guesses[get(currentWordIndex)] || [];
+};
+
+const findLastFilledIndex = (letters = []) => {
+  for (let i = CONSTANTS.MAX_LETTERS - 1; i >= 0; i--) {
+    const value = letters[i];
+    if (value && value.trim && value.trim() !== "") {
+      return i;
+    }
+  }
+  return 0;
+};
+
+const findFirstEmptyIndex = (letters = []) => {
+  for (let i = 0; i < CONSTANTS.MAX_LETTERS; i++) {
+    const value = letters[i];
+    if (!value || (value.trim && value.trim() === "")) {
+      return i;
+    }
+  }
+  return CONSTANTS.MAX_LETTERS - 1;
+};
+
+export const moveCursorLeft = () => {
+  if (get(gameState) !== CONSTANTS.GAME_STATES.PLAYING) {
+    return;
+  }
+
+  const currentIndex = get(currentLetterIndex);
+  const letters = getCurrentWord();
+
+  if (currentIndex >= CONSTANTS.MAX_LETTERS) {
+    const target = findLastFilledIndex(letters);
+    setAndSaveCurrentLetterIndex(target);
+    return;
+  }
+
+  const wrappedIndex = currentIndex <= 0 ? CONSTANTS.MAX_LETTERS - 1 : currentIndex - 1;
+  setAndSaveCurrentLetterIndex(wrappedIndex);
+};
+
+export const moveCursorRight = () => {
+  if (get(gameState) !== CONSTANTS.GAME_STATES.PLAYING) {
+    return;
+  }
+
+  const currentIndex = get(currentLetterIndex);
+  const letters = getCurrentWord();
+  if (currentIndex >= CONSTANTS.MAX_LETTERS) {
+    const target = findFirstEmptyIndex(letters);
+    setAndSaveCurrentLetterIndex(target);
+    return;
+  }
+
+  const wrappedIndex = currentIndex >= CONSTANTS.MAX_LETTERS - 1 ? 0 : currentIndex + 1;
+  setAndSaveCurrentLetterIndex(wrappedIndex);
+};
+
 //LOADERS
 const loadGameState = () => {
   const loadedState = localStorage.getItem(CONSTANTS.GAME_STATE_NAME);
@@ -124,14 +184,9 @@ export const guessLetter = (letter) => {
         return prev;
     })
 
-    // Find the next empty position, skipping over letters that are already written
     let nextPos = currentPos + 1;
-    const currentGuesses = get(userGuessesArray);
-    const currentWord = currentGuesses[get(currentWordIndex)];
-    
-    // Skip over positions that already have letters
-    while (nextPos < CONSTANTS.MAX_LETTERS && currentWord[nextPos] && currentWord[nextPos].trim() !== '') {
-        nextPos++;
+    if (nextPos > CONSTANTS.MAX_LETTERS) {
+        nextPos = CONSTANTS.MAX_LETTERS;
     }
     
     setAndSaveCurrentLetterIndex(nextPos);
@@ -150,31 +205,51 @@ export const deleteLetter = () => {
     }
 
     const letterIndex = get(currentLetterIndex);
-    const currentWord = get(userGuessesArray)[get(currentWordIndex)];
+    const currentWordIndexValue = get(currentWordIndex);
+    const guesses = get(userGuessesArray);
+    const currentWord = guesses[currentWordIndexValue];
 
-    // If the cursor is on a square that already has a letter, delete that letter
-    // and effectively "deselect" all squares by moving the cursor out of bounds.
-    if (letterIndex < CONSTANTS.MAX_LETTERS && currentWord[letterIndex] && currentWord[letterIndex].trim() !== '') {
-        userGuessesArray.update(prev => {
-            prev[get(currentWordIndex)][letterIndex] = "";
-            return prev;
-        });
-
-        // Move cursor to a non-existent index to remove the highlight from all squares.
-        setAndSaveCurrentLetterIndex(CONSTANTS.MAX_LETTERS);
-
-    } else {
-        // Otherwise, behave like a standard backspace, deleting the character before the cursor.
-        const posToDelete = letterIndex - 1;
-        if (posToDelete >= 0) {
-            userGuessesArray.update(prev => {
-                prev[get(currentWordIndex)][posToDelete] = "";
-                return prev;
-            });
-            // Move the cursor to the now-empty position.
-            setAndSaveCurrentLetterIndex(posToDelete);
-        }
+    if (!Array.isArray(currentWord)) {
+      return;
     }
+
+    let deletionOccurred = false;
+    let clearedIndex = null;
+
+    userGuessesArray.update(prev => {
+        const row = prev[currentWordIndexValue];
+        if (!row) {
+            return prev;
+        }
+
+        if (letterIndex < CONSTANTS.MAX_LETTERS && row[letterIndex] && row[letterIndex].trim() !== '') {
+            row[letterIndex] = "";
+            clearedIndex = letterIndex;
+            deletionOccurred = true;
+        } else {
+            const posToDelete = letterIndex - 1;
+            if (posToDelete >= 0 && row[posToDelete] && row[posToDelete].trim() !== '') {
+                row[posToDelete] = "";
+                clearedIndex = posToDelete;
+                deletionOccurred = true;
+            }
+        }
+
+        if (deletionOccurred) {
+            localStorage.setItem(CONSTANTS.GUESSES_NAME, JSON.stringify(prev));
+        }
+
+        return prev;
+    });
+
+    if (!deletionOccurred) {
+        return;
+    }
+
+    const targetIndex = clearedIndex ?? 0;
+    const normalizedTarget = Math.min(Math.max(targetIndex, 0), CONSTANTS.MAX_LETTERS - 1);
+
+    setAndSaveCurrentLetterIndex(normalizedTarget);
 }
 
 export const guessWord = () => {

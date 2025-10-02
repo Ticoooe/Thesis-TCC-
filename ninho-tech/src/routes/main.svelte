@@ -7,7 +7,7 @@
   import Overlay from "../lib/components/Overlay.svelte";
   import LetterInput from "../lib/components/LetterInput.svelte";
   import DefinitionSidebar from "../lib/components/DefinitionSidebar.svelte";
-  import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, userGuessesArray, wordDefinition } from "../lib/stores/gameStore";
+import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, moveCursorLeft, moveCursorRight, userGuessesArray, wordDefinition } from "../lib/stores/gameStore";
   import CONSTANTS from "../lib/utils/constants";
     
     let loaded = false;
@@ -38,6 +38,14 @@
         }
         else if(e.code === "Enter"){
             guessWord();
+        }
+        else if(e.code === "ArrowLeft") {
+            e.preventDefault();
+            moveCursorLeft();
+        }
+        else if(e.code === "ArrowRight") {
+            e.preventDefault();
+            moveCursorRight();
         }
         else if(isLetter(e.key)){
             guessLetter(key)
