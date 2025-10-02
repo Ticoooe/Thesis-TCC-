@@ -1,66 +1,62 @@
 /**
  * Scores a guess against a target word, returning letter results for each position
- * @param {string} target - The target word to guess
- * @param {string} guess - The guess word
- * @param {boolean} normalizeAccents - Whether to normalize accents (default: true)
- * @returns {('correct'|'present'|'absent')[]} Array of results for each position
- * @throws {Error} If target and guess have different lengths
+ * @param {string} target
+ * @param {string} guess
+ * @param {boolean} normalizeAccents
+ * @returns {('correct'|'present'|'absent')[]}
  */
 export function scoreGuess(target, guess, normalizeAccents = true) {
-  // Normalize inputs first
   const normalizedTarget = normalizeAccents ? normalizeWord(target) : target.toUpperCase();
   const normalizedGuess = normalizeAccents ? normalizeWord(guess) : guess.toUpperCase();
-  
-  // Basic validation
+
   if (normalizedTarget.length !== normalizedGuess.length) {
-    throw new Error(`Target and guess must have the same length.`);
+    throw new Error(`Target and guess must have the same length. Target: ${normalizedTarget.length}, Guess: ${normalizedGuess.length}`);
   }
   if (normalizedTarget.length !== 5) {
-    throw new Error(`Only 5-letter words are supported.`);
-  }
-  
-  const result = new Array(normalizedTarget.length).fill(null);
-  const targetLetterCounts = {};
-
-  // Count letters in the target word for accurate 'present' scoring
-  for (const letter of normalizedTarget) {
-    targetLetterCounts[letter] = (targetLetterCounts[letter] || 0) + 1;
+    throw new Error(`Only 5-letter words are supported. Target: ${normalizedTarget.length}, Guess: ${normalizedGuess.length}`);
   }
 
-  // First pass: mark 'correct' letters (green)
-  // This pass is crucial to ensure 'correct' letters are prioritized over 'present' ones.
-  for (let i = 0; i < normalizedGuess.length; i++) {
+  const n = normalizedTarget.length;
+  const result = new Array(n).fill('absent');
+
+  // 1) Passo verde: marca e registra posições do alvo já consumidas
+  const targetUsed = new Array(n).fill(false);
+  for (let i = 0; i < n; i++) {
     if (normalizedGuess[i] === normalizedTarget[i]) {
       result[i] = 'correct';
-      targetLetterCounts[normalizedGuess[i]]--;
+      targetUsed[i] = true;
     }
   }
 
-  // Second pass: mark 'present' (yellow) and 'absent' (gray) letters
-  // This pass handles the remaining letters.
-  for (let i = 0; i < normalizedGuess.length; i++) {
-    // Skip letters that are already marked as 'correct'
-    if (result[i] === 'correct') {
-      continue;
-    }
-
-    // If the letter exists in the target and we haven't used all of them up
-    if (targetLetterCounts[normalizedGuess[i]] > 0) {
-      result[i] = 'present';
-      targetLetterCounts[normalizedGuess[i]]--;
-    } else {
-      result[i] = 'absent';
+  // 2) Reconta o alvo considerando apenas posições NÃO usadas pelos verdes
+  const remainingCounts = Object.create(null);
+  for (let i = 0; i < n; i++) {
+    if (!targetUsed[i]) {
+      const ch = normalizedTarget[i];
+      remainingCounts[ch] = (remainingCounts[ch] || 0) + 1;
     }
   }
-  
+
+// Para cada posição não-green do palpite, tenta achar MESMA LETRA em alguma posição do alvo ainda não usada
+  for (let i = 0; i < n; i++) {
+    if (result[i] !== 'correct') {
+      const ch = normalizedGuess[i];
+      let found = false;
+      for (let j = 0; j < n; j++) {
+        if (!targetUsed[j] && normalizedTarget[j] === ch) {
+          result[i] = 'present';
+          targetUsed[j] = true; // consome essa posição do alvo
+          found = true;
+          break;
+        }
+      }
+      if (!found) result[i] = 'absent';
+    }
+  }
+
   return result;
 }
 
-/**
- * Normalizes Portuguese words by removing accents and converting to uppercase
- * @param {string} word - The word to normalize
- * @returns {string} Normalized word
- */
 function normalizeWord(word) {
   return word
     .toUpperCase()
