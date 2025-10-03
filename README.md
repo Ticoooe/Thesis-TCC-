@@ -28,10 +28,10 @@ cd seu-repositorio
 
 ### 2️⃣ Instalar Dependências
 ```bash
-npm install  # Para o front-end e back-end, se aplicável
+pnpm install  # Para o front-end e back-end, se aplicável
 ```
 
 ### 3️⃣ Executar o Projeto
 ```bash
-npm run dev  # Para iniciar o ambiente de desenvolvimento
+pnpm run dev  # Para iniciar o ambiente de desenvolvimento
 ```

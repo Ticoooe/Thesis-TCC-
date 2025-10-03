@@ -1,0 +1,31 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`scoreGuess > Snapshot matrix for 3 scenarios > should match snapshot for scenario 1: Perfect match 1`] = `
+[
+  "correct",
+  "correct",
+  "correct",
+  "correct",
+  "correct",
+]
+`;
+
+exports[`scoreGuess > Snapshot matrix for 3 scenarios > should match snapshot for scenario 2: Repeated letters 1`] = `
+[
+  "present",
+  "correct",
+  "absent",
+  "correct",
+  "correct",
+]
+`;
+
+exports[`scoreGuess > Snapshot matrix for 3 scenarios > should match snapshot for scenario 3: Mixed results 1`] = `
+[
+  "present",
+  "present",
+  "present",
+  "present",
+  "present",
+]
+`;
