@@ -31,7 +31,3 @@ node_modules
 .env
 .env.*
 !.env.example
-
-# Dictionary files
-frequency-words.txt
-pt_BR.dic
