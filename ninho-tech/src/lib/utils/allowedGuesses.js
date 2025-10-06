@@ -14,6 +14,7 @@ export default [
   "acima",
   "acoes",
   "acola",
+  "chove",
   "acude",
   "adair",
   "adele",
