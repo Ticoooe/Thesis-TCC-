@@ -253,39 +253,39 @@ export const deleteLetter = () => {
 }
 
 export const guessWord = () => {
-    if(get(gameState) !== CONSTANTS.GAME_STATES.PLAYING){
+  if(get(gameState) !== CONSTANTS.GAME_STATES.PLAYING){
         return;
-    }
+  }
     
-    const guessesArr = get(userGuessesArray);
-    const currentGuessArray = guessesArr[get(currentWordIndex)];
+  const guessesArr = get(userGuessesArray);
+  const currentGuessArray = guessesArr[get(currentWordIndex)];
     
-    // Check if all 5 positions have letters (no blanks)
-    const hasAllLetters = currentGuessArray.every(letter => letter && letter.trim() !== '');
-    if (!hasAllLetters) {
-        return displayAlert('Por favor, preencha todos os 5 espaços.', ALERT_TYPES.INFO, 2000);
-    }
-    
-    const guessStr = currentGuessArray.join('');
-    const normalizedGuess = normalize(guessStr);
+  // Check if all 5 positions have letters (no blanks)
+  const hasAllLetters = currentGuessArray.every(letter => letter && letter.trim() !== '');
+  if (!hasAllLetters) {
+      return displayAlert('Por favor, preencha todos os 5 espaços.', ALERT_TYPES.INFO, 2000);
+  }
+  
+  const guessStr = currentGuessArray.join('');
+  const normalizedGuess = normalize(guessStr);
 
-    if (!allowedWordSet.has(normalizedGuess)) {
-        return displayAlert('Escreva uma palavra válida.', ALERT_TYPES.INFO, 2000);
-    }
+  if (!allowedWordSet.has(normalizedGuess)) {
+      return displayAlert('Escreva uma palavra válida.', ALERT_TYPES.INFO, 2000);
+  }
 
-    const updatedGameState = getUpdatedGameState(guessStr, get(currentWordIndex));
-    setAndSaveGameState(updatedGameState);
-    displayFeedback(updatedGameState);
+  const updatedGameState = getUpdatedGameState(guessStr, get(currentWordIndex));
+  setAndSaveGameState(updatedGameState);
+  displayFeedback(updatedGameState);
 
-    if (updatedGameState !== CONSTANTS.GAME_STATES.PLAYING) {
-        getWordDefinition();
-    }
+  if (updatedGameState !== CONSTANTS.GAME_STATES.PLAYING) {
+      getWordDefinition();
+  }
 
-    setAndSaveCurrentWordIndex(get(currentWordIndex) + 1);
-    setAndSaveCurrentLetterIndex(0);
-    updateLetterStatuses(guessesArr, get(correctWord));
-    
-    localStorage.setItem(CONSTANTS.LAST_PLAYED_NAME, new Date());
+  setAndSaveCurrentWordIndex(get(currentWordIndex) + 1);
+  setAndSaveCurrentLetterIndex(0);
+  updateLetterStatuses(guessesArr, get(correctWord));
+  
+  localStorage.setItem(CONSTANTS.LAST_PLAYED_NAME, new Date());
 }
 
 export const getWordDefinition = async () => {

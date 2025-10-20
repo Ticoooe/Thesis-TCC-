@@ -1,4 +1,5 @@
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
+import  adapter  from '@sveltejs/adapter-vercel'
 
 const config = {
   preprocess: vitePreprocess(),
@@ -15,7 +16,8 @@ const config = {
     },
     files: {
       assets: "static"
-    }
+    },
+    adapter: adapter(),
   }
 }
 
