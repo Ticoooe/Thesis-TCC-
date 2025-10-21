@@ -1,20 +1,23 @@
 import OpenAI from 'openai';
 import { json } from '@sveltejs/kit';
-import { OPENAI_API_KEY } from '$env/dynamic/private';
+import { env } from '$env/dynamic/private';
 
 // cache em memória (ok para 1 instância; em produção distribuída use KV/Redis)
 const cache = new Map();    // word -> payload
 const inFlight = new Map(); // word -> Promise
 
-const ONLY_LETTERS_5 = /^[\p{L}]{5}$/u;
-
-const openai = new OpenAI({ 
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: OPENAI_API_KEY,
-});
+function getOpenAI() {
+  const apiKey = env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY não configurada');
+  }
+  return new OpenAI({ 
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: apiKey,
+  });
+}
 
 async function callOpenAI(word) {
-  console.log('callOpenAI', word);
   const sys = `
   Você é um explicador de palavras em português do Brasil, com tom leve, acolhedor e curioso — pensado para o público do Grupo Ninho (crianças, adolescentes e suas famílias).
   Explique de forma simples, sem formalidade excessiva nem jargões.
@@ -33,46 +36,27 @@ async function callOpenAI(word) {
 
   const user = `Palavra: ${word}`;
 
-  let attempt = 0;
-  // até 5 tentativas com backoff exponencial simples
-  // respeitando Retry-After quando existir
-    try {
-      const r = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        response_format: { type: 'json_object' },
-        temperature: 0.3,
-        messages: [
-          { role: 'system', content: sys },
-          { role: 'user', content: user }
-        ]
-      });
-      const content = r.choices?.[0]?.message?.content || '{}';
-      return JSON.parse(content);
-    } catch (e) {
-      const status = e?.status || e?.response?.status;
-      const retryAfterSec =
-        Number(e?.response?.headers?.get?.('retry-after')) ||
-        Number(e?.headers?.['retry-after']) || 0;
-
-      // se não for 429/503, propaga
-       if (!(status === 429 || status === 503)) throw e;
-
-      attempt++;
-      if (attempt > 4) throw e;
-
-      const backoff = retryAfterSec ? retryAfterSec * 1000 : Math.min(1000 * 2 ** attempt, 8000);
-      await new Promise((r) => setTimeout(r, backoff));
-    }
+  const openai = getOpenAI();
+  const r = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    response_format: { type: 'json_object' },
+    temperature: 0.3,
+    messages: [
+      { role: 'system', content: sys },
+      { role: 'user', content: user }
+    ]
+  });
+  const content = r.choices?.[0]?.message?.content || '{}';
+  return JSON.parse(content);
 }
 
 export async function GET({ url, setHeaders }) {
   try {
-    const raw = String(url.searchParams.get('word') || '').trim();
-    if (!ONLY_LETTERS_5.test(raw)) {
+    const word = String(url.searchParams.get('word') || '').trim();
+    
+    if (!/[\p{L}]{5}/u.test(word)) {
       return json({ error: 'Palavra inválida (5 letras)' }, { status: 400 });
     }
-
-    const word = raw; // mantenha acentos aqui se quiser exibir bonito
 
     // 1) cache hit
     if (cache.has(word)) {
@@ -103,9 +87,10 @@ export async function GET({ url, setHeaders }) {
 
     setHeaders({ 'Cache-Control': 'public, max-age=3600' });
     return json({ word, ...data });
-  } catch (e) {
-    const status = e?.status || e?.response?.status || 500;
-    const msg = e?.message || 'Erro ao obter definição';
+  } catch (err) {
+    const msg = err?.message || 'internal error';
+    const status = /quota|rate|429/i.test(msg) ? 429 : 500;
     return json({ error: msg }, { status });
   }
 }
+

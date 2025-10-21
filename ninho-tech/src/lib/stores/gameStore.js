@@ -285,7 +285,7 @@ export const guessWord = () => {
   setAndSaveCurrentLetterIndex(0);
   updateLetterStatuses(guessesArr, get(correctWord));
   
-  localStorage.setItem(CONSTANTS.LAST_PLAYED_NAME, new Date());
+  localStorage.setItem(CONSTANTS.LAST_PLAYED_NAME, new Date().toISOString());
 }
 
 export const getWordDefinition = async () => {
@@ -295,7 +295,7 @@ export const getWordDefinition = async () => {
         const definition = await fetchDefinition(get(correctWord));
         wordDefinition.set(definition);
     } catch (e) {
-        displayAlert(e.message, ALERT_TYPES.DANGER);
+        displayAlert(e.message, ALERT_TYPES.INFO);
     }
 }
 
@@ -318,9 +318,9 @@ const displayFeedback = (state) => {
   const correctWordStr = get(correctWord);
   
   if(state === CONSTANTS.GAME_STATES.WIN) {
-    displayAlert(`Parabéns! Você ganhou! A palavra era: ${correctWordStr}`, ALERT_TYPES.SUCCESS)
+    displayAlert(`Parabéns! Você ganhou! A palavra era: ${correctWordStr}`, ALERT_TYPES.INFO)
   }else if(state === CONSTANTS.GAME_STATES.LOSE){
-    displayAlert(`Que pena! Você perdeu. A palavra era: ${correctWordStr}`, ALERT_TYPES.DANGER)
+    displayAlert(`Que pena! Você perdeu. A palavra era: ${correctWordStr}`, ALERT_TYPES.INFO)
   }
 }
 

@@ -1,10 +1,7 @@
 <script>
-    import "../../app.css";
-    import Page from "./main.svelte";
+  import "../app.css";
 </script>
 
 <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
-    <slot>
-        <Page />
-    </slot>
+  <slot />
 </div>

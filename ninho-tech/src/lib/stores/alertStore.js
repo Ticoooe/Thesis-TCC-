@@ -12,7 +12,7 @@ export const alertType = writable(ALERT_TYPES.INFO);
 /**
  * Exibe um alerta e, se resetTime for informado, limpa após esse período (ms).
  * @param {string} message
- * @param {'DANGER'|'INFO'|'SUCCESS'} [type=ALERT_TYPES.INFO]
+ * @param {string} [type=ALERT_TYPES.INFO]
  * @param {number} [resetTime] - tempo em ms para limpar o alerta
  */
 let clearTimer;
