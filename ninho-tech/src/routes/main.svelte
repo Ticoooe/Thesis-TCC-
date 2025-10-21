@@ -4,7 +4,6 @@
   import Alert from "../lib/components/Alert.svelte";
   import InstructionsSidebar from "../lib/components/InstructionsSidebar.svelte";
   import Keyboard from "../lib/components/Keyboard.svelte";
-  import Overlay from "../lib/components/Overlay.svelte";
   import LetterInput from "../lib/components/LetterInput.svelte";
   import DefinitionSidebar from "../lib/components/DefinitionSidebar.svelte";
 import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, moveCursorLeft, moveCursorRight, userGuessesArray, wordDefinition } from "../lib/stores/gameStore";
