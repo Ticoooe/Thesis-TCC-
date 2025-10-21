@@ -14,10 +14,9 @@ const config = {
     alias: {
       "$lib": "src/lib"
     },
-    files: {
-      assets: "static"
-    },
-    adapter: adapter(),
+    adapter: adapter({
+      runtime: 'nodejs20.x'
+    }),
   }
 }
 
