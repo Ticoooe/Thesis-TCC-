@@ -5831,5 +5831,7 @@ export default [
   "zurna",
   "zurre",
   "zurro",
-  "zuruo"
+  "zuruo",
+  "armas",
+  "nepal"
 ];

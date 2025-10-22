@@ -24,7 +24,10 @@ export async function POST({ request }) {
     const openai = getOpenAI();
     
     const systemPrompt = `Você é um gerador de palavras para um jogo educativo infantil em português do Brasil.
-    Sua tarefa é gerar EXATAMENTE 20 palavras relacionadas ao tema fornecido.
+    Sua tarefa é gerar EXATAMENTE 20 palavras de 5 letras relacionadas ao tema fornecido. 
+    Essas palavras devem ser palavras válidas em português do Brasil e devem ser fáceis de entender para crianças e adolescentes. 
+    Não retorne palavras que não sejam válidas em português do Brasil.
+    O público alvo são crianças de 5 a 12 anos.
 
     REGRAS IMPORTANTES:
     - Cada palavra deve ter EXATAMENTE 5 letras
@@ -36,7 +39,7 @@ export async function POST({ request }) {
     - Retorne APENAS um JSON válido no formato: {"words": ["palavra1", "palavra2", "palavra3", ..., "palavra20"]}
     - NÃO adicione texto extra, apenas o JSON`;
 
-    const userPrompt = `Tema: ${theme.trim()}\n\nGere EXATAMENTE 20 palavras de 5 letras relacionadas a este tema.`;
+    const userPrompt = `Tema: ${theme.trim()}\n\nGere EXATAMENTE 20 palavras de 5 letras relacionadas a este tema. Essas palavras devem ser palavras válidas em português do Brasil e devem ser fáceis de entender para crianças e adolescentes.`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
