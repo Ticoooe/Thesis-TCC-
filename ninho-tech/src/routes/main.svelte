@@ -156,9 +156,9 @@ import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, moveCu
               </h1>
             </div>
             
-            <div class="flex flex-col gap-y-1 max-w-2xl h-full justify-between items-center">
+            <div class="flex flex-col gap-y-1 max-w-2xl h-full items-center">
               <Alert/>
-              <div class="grow">
+              <div class="flex flex-col justify-start mt-4">
                 {#each $userGuessesArray as lettersArr, i}
                   <div class="flex mx-auto space-x-1 mb-1 text-white">
                     {#each lettersArr as letter, j}
@@ -167,7 +167,9 @@ import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, moveCu
                   </div>
                 {/each}
               </div>
-              <Keyboard/>
+              <div class="mt-auto pt-8">
+                <Keyboard/>
+              </div>
             </div>
         </div>
         

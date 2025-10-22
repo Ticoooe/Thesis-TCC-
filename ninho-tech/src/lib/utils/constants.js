@@ -33,7 +33,7 @@ const KEYBOARD_ROWS_ARR = [
 Object.freeze(KEYBOARD_ROWS_ARR)
 
 const MAX_LETTERS = 5;
-const MAX_GUESSES = 6;
+const MAX_GUESSES = 8;
 const ID_NAME = "svordle_sessionId";
 const GUESSES_NAME = "svordle_userGuessesStr";
 const LAST_PLAYED_NAME = "svordle_lastPlayedDate"

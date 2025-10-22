@@ -9,7 +9,7 @@
   </p>
 
   <p class="mt-1">
-    Adivinhe a palavra do dia em <span class="font-bold">seis tentativas</span>.
+    Adivinhe a palavra do dia em <span class="font-bold">oito tentativas</span>.
     Cada palpite deve ser uma <span class="font-bold">palavra válida de cinco letras</span>.
   </p>
 
