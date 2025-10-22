@@ -23,9 +23,8 @@ export async function POST({ request }) {
 
     const openai = getOpenAI();
     
-    const systemPrompt = `
-    Você é um gerador de palavras para um jogo educativo infantil em português do Brasil.
-    Sua tarefa é gerar EXATAMENTE 15 palavras relacionadas ao tema fornecido.
+    const systemPrompt = `Você é um gerador de palavras para um jogo educativo infantil em português do Brasil.
+    Sua tarefa é gerar EXATAMENTE 20 palavras relacionadas ao tema fornecido.
 
     REGRAS IMPORTANTES:
     - Cada palavra deve ter EXATAMENTE 5 letras
@@ -33,10 +32,11 @@ export async function POST({ request }) {
     - As palavras devem ser apropriadas para crianças e adolescentes
     - As palavras devem ser relacionadas ao tema fornecido
     - Evite palavras muito complexas ou técnicas
-    - Retorne APENAS um JSON no formato: {"words": ["palavra1", "palavra2", ...]}
-    `;
+    - Retorne EXATAMENTE 20 palavras no array
+    - Retorne APENAS um JSON válido no formato: {"words": ["palavra1", "palavra2", "palavra3", ..., "palavra20"]}
+    - NÃO adicione texto extra, apenas o JSON`;
 
-    const userPrompt = `Tema: ${theme.trim()}\n\n Gere 10 palavras de 5 letras relacionadas a este tema.`;
+    const userPrompt = `Tema: ${theme.trim()}\n\nGere EXATAMENTE 20 palavras de 5 letras relacionadas a este tema.`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -51,6 +51,8 @@ export async function POST({ request }) {
     const content = response.choices?.[0]?.message?.content || '{}';
     const data = JSON.parse(content);
     
+    console.log('📝 [+server.js] Palavras recebidas da IA:', data.words?.length || 0);
+    
     if (!data.words || !Array.isArray(data.words) || data.words.length === 0) {
       throw new Error('Formato de resposta inválido da IA');
     }
@@ -60,15 +62,20 @@ export async function POST({ request }) {
       .map(w => w.toLowerCase().trim())
       .filter(w => w.length === 5);
 
+    console.log('✅ [+server.js] Palavras válidas (5 letras):', validWords.length, '/', data.words.length);
+    console.log('🔤 [+server.js] Palavras:', validWords);
+
     if (validWords.length === 0) {
       throw new Error('Nenhuma palavra válida gerada');
     }
-
-    console.log('🚀 [+server.js] Valid words:', validWords);
+    
+    if (validWords.length < 10) {
+      console.warn('⚠️  [+server.js] Menos de 10 palavras válidas geradas. Total:', validWords.length);
+    }
+    
     // Selecionar uma palavra aleatoriamente
     const selectedWord = validWords[Math.floor(Math.random() * validWords.length)];
-
-    console.log('🚀 [+server.js] Selected word:', selectedWord);
+    console.log('🎯 [+server.js] Palavra selecionada:', selectedWord.toUpperCase());
     return json({ 
       word: selectedWord.toUpperCase(),
       allWords: validWords,
