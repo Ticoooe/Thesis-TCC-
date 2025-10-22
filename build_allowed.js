@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
+// Script para atualizar allowedGuesses.js usando frequency-words.txt e dicionário
 const LIMIT = 8000;
 
 const normalize = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -22,9 +23,10 @@ const dictWords = dictRaw
   .filter(word => /^[a-záàâãéêíóôõúç]+$/.test(word));
 const dictSet = new Set(dictWords.map(normalize));
 
-const answersPath = path.join('ninho-tech','src','lib','utils','answers.js');
-const answersContent = fs.readFileSync(answersPath,'utf-8');
-const answersArray = JSON.parse(answersContent.replace('export default','').trim().replace(/;$/,''));
+// Ler palavras do arquivo allowedGuesses.js (lista curada)
+const allowedPath = path.join('ninho-tech','src','lib','utils','allowedGuesses.js');
+const allowedContent = fs.readFileSync(allowedPath,'utf-8');
+const lexicoArray = JSON.parse(allowedContent.replace('export default','').trim().replace(/;$/,''));
 
 const disallowedWords = new Set(['aaaah','xanax','aaron','abbey','about']);
 const disallowedPrefixes = ['mc','mr','dr','sr','sra'];
@@ -47,7 +49,7 @@ for (const { word } of freqWords) {
   }
 }
 
-for (const word of answersArray) {
+for (const word of lexicoArray) {
   const plain = normalize(word);
   if (plain.length === 5 && /^[a-z]+$/.test(plain)) {
     allowedSet.add(plain);

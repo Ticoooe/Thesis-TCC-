@@ -2,12 +2,16 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import OpenAI from 'openai';
 
-// ajuste o caminho conforme seu projeto
-import answers from '../src/lib/utils/answers.js';
+// Importar palavras do allowedGuesses.js (lista curada)
+import allowedGuesses from '../src/lib/utils/allowedGuesses.js';
+const answers = allowedGuesses;
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const OUT_PATH = path.resolve('static/defs-pt.json');
+
+// Script para gerar definições das palavras do allowedGuesses.js usando OpenAI
+// Gera o arquivo static/defs-pt.json com as definições
 
 // prompt curto e barato
 const SYSTEM = `Explique palavras em português-BR.
