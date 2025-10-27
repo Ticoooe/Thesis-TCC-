@@ -6,11 +6,18 @@
   import Keyboard from "../lib/components/Keyboard.svelte";
   import LetterInput from "../lib/components/LetterInput.svelte";
   import DefinitionSidebar from "../lib/components/DefinitionSidebar.svelte";
+  import StartModal from "../lib/components/StartModal.svelte";
 import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, moveCursorLeft, moveCursorRight, userGuessesArray, wordDefinition } from "../lib/stores/gameStore";
+  import { generateWordFromTheme } from "../lib/api/generateWord.js";
+  import { displayAlert, ALERT_TYPES } from "../lib/stores/alertStore";
   import CONSTANTS from "../lib/utils/constants";
     
     let loaded = false;
     let showInstructions = true;
+    let gameStarted = false;
+    let showStartModal = false;
+    let isGeneratingWord = false;
+    let theme = '';
 
     onMount(async () => {
         // Clear storage on every page load to ensure a fresh start
@@ -21,13 +28,41 @@ import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, moveCu
         localStorage.removeItem(CONSTANTS.CURRENT_LETTER_INDEX_NAME);
         localStorage.removeItem(CONSTANTS.GAME_STATE_NAME);
         localStorage.removeItem(CONSTANTS.CORRECT_WORD_NAME);
-
-        await initializeGame();
+        
         loaded = true;
     })
 
+    async function handleStartClick() {
+        showStartModal = true;
+    }
+
+    async function handleModalStart(event) {
+        theme = event.detail.value.trim();
+        
+        if (!theme) {
+            displayAlert('Por favor, digite um tema.', ALERT_TYPES.INFO, 2000);
+            return;
+        }
+
+        showStartModal = false;
+        isGeneratingWord = true;
+
+        try {
+            displayAlert(`Gerando palavra relacionada a: ${theme}...`, ALERT_TYPES.INFO, 3000);
+            const result = await generateWordFromTheme(theme);
+            await initializeGame(result.word);
+            gameStarted = true;
+            isGeneratingWord = false;
+            displayAlert(`Tema: ${theme} ✓`, ALERT_TYPES.SUCCESS, 2000);
+        } catch (error) {
+            isGeneratingWord = false;
+            displayAlert(error.message || 'Erro ao gerar palavra. Tente novamente.', ALERT_TYPES.INFO, 3000);
+            showStartModal = true;
+        }
+    }
+
     const handleKeydown = (e) => {
-        if($gameState !== CONSTANTS.GAME_STATES.PLAYING || e.shiftKey || e.ctrlKey){
+        if(!gameStarted || $gameState !== CONSTANTS.GAME_STATES.PLAYING || e.shiftKey || e.ctrlKey){
             return;
         }
         
@@ -58,6 +93,29 @@ import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, moveCu
 </script>
 <svelte:window on:keydown={handleKeydown}/>
 {#if loaded }
+    {#if !gameStarted}
+        {#if isGeneratingWord}
+            <!-- Loading indicator -->
+            <div class="flex flex-col items-center justify-center w-full h-screen">
+                <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-white mb-4"></div>
+                <p class="text-white text-xl">Gerando palavra...</p>
+            </div>
+        {:else}
+            <!-- Botão COMEÇAR grande no centro -->
+            <div class="flex items-center justify-center w-full h-screen">
+                <button
+                    on:click={handleStartClick}
+                    class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-4xl py-8 px-16 rounded-2xl transition-all transform hover:scale-110 active:scale-95 shadow-2xl"
+                >
+                    COMEÇAR
+                </button>
+            </div>
+
+            {#if showStartModal}
+                <StartModal on:start={handleModalStart} />
+            {/if}
+        {/if}
+    {:else}
     <div class="flex flex-row justify-center items-start w-full h-screen">
         <div class="w-full h-screen text-white mx-auto max-w-10 py-10 flex flex-col items-center relative">
             <!-- Instructions sidebar -->
@@ -98,9 +156,9 @@ import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, moveCu
               </h1>
             </div>
             
-            <div class="flex flex-col gap-y-1 max-w-2xl h-full justify-between items-center">
+            <div class="flex flex-col gap-y-1 max-w-2xl h-full items-center">
               <Alert/>
-              <div class="grow">
+              <div class="flex flex-col justify-start mt-4">
                 {#each $userGuessesArray as lettersArr, i}
                   <div class="flex mx-auto space-x-1 mb-1 text-white">
                     {#each lettersArr as letter, j}
@@ -109,7 +167,9 @@ import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, moveCu
                   </div>
                 {/each}
               </div>
-              <Keyboard/>
+              <div class="mt-auto pt-8">
+                <Keyboard/>
+              </div>
             </div>
         </div>
         
@@ -117,4 +177,5 @@ import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, moveCu
             <DefinitionSidebar />
         {/if}
     </div>
+    {/if}
 {/if}

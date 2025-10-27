@@ -1,10 +1,9 @@
 import { get, writable } from "svelte/store";
 import { v4 as uuidv4 } from 'uuid';
-import answers from "../../lib/utils/answers.js";
-import allowedGuesses from "../../lib/utils/allowedGuesses.js";
 import CONSTANTS from "../../lib/utils/constants.js";
 import { ALERT_TYPES, displayAlert } from "./alertStore.js";
 import { fetchDefinition } from "../api/definition.js";
+import { checkWord } from "../api/checkWord.js";
 
 export const correctWord = writable();
 export const wordDefinition = writable(null);
@@ -16,10 +15,6 @@ export const letterStatuses = writable({});
 const userId = writable();
 
 const normalize = (word = "") => word.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-const allowedWordSet = new Set([
-  ...answers.map((word) => normalize(word)),
-  ...allowedGuesses.map((word) => normalize(word)),
-]);
 
 const getLetterKey = (letter = "") => normalize(letter).toUpperCase();
 
@@ -140,13 +135,6 @@ const loadLastPlayedDate = () => {
     return null;
 }
 
-const getRandomWord = () => {
-  const randomNum = Math.floor(Math.random() * answers.length);
-  const selectedWord = answers[randomNum].toUpperCase();
-  console.log("Selected word:", selectedWord);
-  return selectedWord;
-}
-
 const loadCorrectWord = () => {
     return localStorage.getItem(CONSTANTS.CORRECT_WORD_NAME);
 }
@@ -177,9 +165,14 @@ export const guessLetter = (letter) => {
     }
 
     const currentPos = get(currentLetterIndex);
+    const currentWordIndexValue = get(currentWordIndex);
     
     userGuessesArray.update( prev => {
-        prev[get(currentWordIndex)][currentPos] = letter.toUpperCase();
+        // Verificar se o array está inicializado
+        if (!prev || !prev[currentWordIndexValue]) {
+            return prev;
+        }
+        prev[currentWordIndexValue][currentPos] = letter.toUpperCase();
         localStorage.setItem(CONSTANTS.GUESSES_NAME, JSON.stringify(prev));
         return prev;
     })
@@ -252,7 +245,7 @@ export const deleteLetter = () => {
     setAndSaveCurrentLetterIndex(normalizedTarget);
 }
 
-export const guessWord = () => {
+export const guessWord = async () => {
   if(get(gameState) !== CONSTANTS.GAME_STATES.PLAYING){
         return;
   }
@@ -266,11 +259,11 @@ export const guessWord = () => {
       return displayAlert('Por favor, preencha todos os 5 espaços.', ALERT_TYPES.INFO, 2000);
   }
   
-  const guessStr = currentGuessArray.join('');
-  const normalizedGuess = normalize(guessStr);
-
-  if (!allowedWordSet.has(normalizedGuess)) {
-      return displayAlert('Escreva uma palavra válida.', ALERT_TYPES.INFO, 2000);
+  const guessStr = normalize(currentGuessArray.join(''));
+ 
+  const allowedRows = await checkWord(guessStr);
+  if (!allowedRows) {
+    return displayAlert('Palavra não encontrada no dicionário.', ALERT_TYPES.INFO, 2000);
   }
 
   const updatedGameState = getUpdatedGameState(guessStr, get(currentWordIndex));
@@ -332,14 +325,14 @@ const generateEmptyGuessesArray = () => {
     return emptyGuesses
 }
 
-export const initializeGame = async () => {
+export const initializeGame = async (customWord = null) => {
     const id = loadUserId() || uuidv4();
     setAndSaveUserId(id);
 
     const loadedState = loadGameState();
 
     if (loadedState === CONSTANTS.GAME_STATES.NEW_PLAYER) {
-        return resetGame(true);
+        return resetGame(true, customWord);
     }
     
     const lastPlayed = loadLastPlayedDate();
@@ -348,12 +341,12 @@ export const initializeGame = async () => {
 
     const sameDay = (a, b) => a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
     if (!lastPlayed || !sameDay(lastPlayed, new Date())) {
-      return resetGame(false); 
+      return resetGame(false, customWord); 
     }
 
     const savedWord = loadCorrectWord();
     if (!savedWord) {
-        return resetGame(false);
+        return resetGame(false, customWord);
     }
 
     correctWord.set(savedWord);
@@ -398,8 +391,14 @@ const generateInitialLetterStatuses = () => {
   return initialLetterStatuses;
 }
 
-export const resetGame = async (isNewPlayer = false) => {
-    setAndSaveCorrectWord(getRandomWord());
+export const resetGame = async (isNewPlayer = false, customWord = null) => {
+    if (!customWord) {
+        console.error("resetGame: customWord é obrigatório");
+        return;
+    }
+    
+    const wordToUse = customWord.toUpperCase();
+    setAndSaveCorrectWord(wordToUse);
     setAndSaveCurrentLetterIndex(0);
     setAndSaveCurrentWordIndex(0);
     setAndSaveUserGuessesArray(generateEmptyGuessesArray());
