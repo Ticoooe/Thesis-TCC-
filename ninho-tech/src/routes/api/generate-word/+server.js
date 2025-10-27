@@ -26,44 +26,58 @@ export async function POST({ request }) {
     const systemPrompt = `Você é um gerador de palavras para um jogo educativo infantil em português do Brasil (público: 5 a 12 anos).
 
 TAREFA
-Gerar EXATAMENTE 20 palavras de 5 letras relacionadas ao tema fornecido, fáceis e comuns no cotidiano brasileiro.
+Gerar palavras COMPLETAS de 5 letras relacionadas ao tema fornecido.
 
-PROIBIDO
+‼️ CRÍTICO - NÃO TRUNCAR PALAVRAS ‼️
+Cada palavra DEVE ser uma palavra COMPLETA e VÁLIDA do dicionário português brasileiro.
+NÃO é permitido cortar/truncar palavras maiores para forçá-las a ter 5 letras.
 
-Palavrões, termos sexuais/violentos/discriminatórios.
+EXEMPLOS DO QUE NÃO FAZER (❌ ERRADO):
+- "físic" (física cortada) ❌
+- "molec" (molécula cortada) ❌
+- "célul" (célula cortada) ❌
+- "biólo" (biologia cortada) ❌
+- "químc" (química cortada) ❌
+- "parti" (partícula cortada) ❌
 
-Nomes próprios, marcas, siglas, abreviações, onomatopeias.
+EXEMPLOS CORRETOS (✅ CERTO):
+- "átomo" (palavra completa de 5 letras) ✅
+- "corpo" (palavra completa de 5 letras) ✅
+- "campo" (palavra completa de 5 letras) ✅
+- "folha" (palavra completa de 5 letras) ✅
+- "terra" (palavra completa de 5 letras) ✅
+- "planta" (palavra completa de 6 letras, mas não use pois precisa ter exatamente 5) ❌
 
-Palavras truncadas/cortadas para caber (ex.: “tubar” para “tubarão” é inválido).
+TAMBÉM PROIBIDO
+- Palavrões, termos sexuais/violentos/discriminatórios
+- Nomes próprios, marcas, siglas, abreviações, onomatopeias
+- Tecnicalidades/arcaísmos/estrangeirismos pouco usados por crianças
 
-Tecnicalidades/arcaísmos/estrangeirismos pouco usados por crianças.
+REQUISITOS
+- Português do Brasil, ortografia correta (com acentos)
+- Somente letras (sem números, hífens, apóstrofos, espaços)
+- EXATAMENTE 5 letras (letra acentuada = 1 letra)
+- Palavras COMPLETAS que existem no dicionário
 
-REQUISITOS LINGUÍSTICOS
-
-Português do Brasil, ortografia correta (com acentos).
-
-Normalização Unicode NFC.
-
-Somente letras (nada de números, hífens, apóstrofos, espaços).
-
-Cada item deve ter exatamente 5 letras no sentido do usuário (uma letra acentuada conta como 1).
-
-VALIDAÇÃO INTERNA (obrigatória)
-Após normalizar para NFC, cada palavra deve corresponder à regex Unicode:
-^(?:\p{L}\p{M}*){5}$ (modo u).
-Se não corresponder, não inclua. Não repita itens. Todas devem ter relação clara com o tema.
-
-SAÍDA (APENAS JSON VÁLIDO, sem texto extra):
+SAÍDA (APENAS JSON VÁLIDO):
 {
-  "words": ["palavra1", "palavra2", "...", "palavra20"]
+  "words": ["palavra1", "palavra2", "...", "palavraN"]
 }`;
 
-    const userPrompt = `Tema: ${theme.trim()}\n\nRetorne somente o JSON acima, com 20 itens que obedeçam a todas as regras.`;
+    const userPrompt = `Tema: ${theme.trim()}
+
+IMPORTANTE: Gere pelo menos 30 palavras COMPLETAS de 5 letras relacionadas ao tema.
+Cada palavra DEVE existir no dicionário português brasileiro como está escrita.
+NÃO corte palavras maiores. Use apenas palavras que NATURALMENTE têm 5 letras.
+
+Exemplos de palavras boas: corpo, campo, folha, terra, átomo, livro, pedra, água, vento, fogo
+
+Retorne APENAS o JSON com as 30 palavras.`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       response_format: { type: 'json_object' },
-      temperature: 0.7,
+      temperature: 0.9,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
@@ -98,6 +112,7 @@ SAÍDA (APENAS JSON VÁLIDO, sem texto extra):
     // Selecionar uma palavra aleatoriamente
     const selectedWord = validWords[Math.floor(Math.random() * validWords.length)];
     console.log('🎯 [+server.js] Palavra selecionada:', selectedWord.toUpperCase());
+    
     return json({ 
       word: selectedWord.toUpperCase(),
       allWords: validWords,

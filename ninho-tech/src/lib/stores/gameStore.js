@@ -1,9 +1,9 @@
 import { get, writable } from "svelte/store";
 import { v4 as uuidv4 } from 'uuid';
-import allowedGuesses from "../../lib/utils/allowedGuesses.js";
 import CONSTANTS from "../../lib/utils/constants.js";
 import { ALERT_TYPES, displayAlert } from "./alertStore.js";
 import { fetchDefinition } from "../api/definition.js";
+import { checkWord } from "../api/checkWord.js";
 
 export const correctWord = writable();
 export const wordDefinition = writable(null);
@@ -15,9 +15,6 @@ export const letterStatuses = writable({});
 const userId = writable();
 
 const normalize = (word = "") => word.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-const allowedWordSet = new Set(
-  allowedGuesses.map((word) => normalize(word))
-);
 
 const getLetterKey = (letter = "") => normalize(letter).toUpperCase();
 
@@ -248,7 +245,7 @@ export const deleteLetter = () => {
     setAndSaveCurrentLetterIndex(normalizedTarget);
 }
 
-export const guessWord = () => {
+export const guessWord = async () => {
   if(get(gameState) !== CONSTANTS.GAME_STATES.PLAYING){
         return;
   }
@@ -262,11 +259,11 @@ export const guessWord = () => {
       return displayAlert('Por favor, preencha todos os 5 espaços.', ALERT_TYPES.INFO, 2000);
   }
   
-  const guessStr = currentGuessArray.join('');
-  const normalizedGuess = normalize(guessStr);
-
-  if (!allowedWordSet.has(normalizedGuess)) {
-      return displayAlert('Escreva uma palavra válida.', ALERT_TYPES.INFO, 2000);
+  const guessStr = normalize(currentGuessArray.join(''));
+ 
+  const allowedRows = await checkWord(guessStr);
+  if (!allowedRows) {
+    return displayAlert('Palavra não encontrada no dicionário.', ALERT_TYPES.INFO, 2000);
   }
 
   const updatedGameState = getUpdatedGameState(guessStr, get(currentWordIndex));
