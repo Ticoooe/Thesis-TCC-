@@ -23,23 +23,42 @@ export async function POST({ request }) {
 
     const openai = getOpenAI();
     
-    const systemPrompt = `Você é um gerador de palavras para um jogo educativo infantil em português do Brasil.
-    Sua tarefa é gerar EXATAMENTE 20 palavras de 5 letras relacionadas ao tema fornecido. 
-    Essas palavras devem ser palavras válidas em português do Brasil e devem ser fáceis de entender para crianças e adolescentes. 
-    Não retorne palavras que não sejam válidas em português do Brasil.
-    O público alvo são crianças de 5 a 12 anos.
+    const systemPrompt = `Você é um gerador de palavras para um jogo educativo infantil em português do Brasil (público: 5 a 12 anos).
 
-    REGRAS IMPORTANTES:
-    - Cada palavra deve ter EXATAMENTE 5 letras
-    - Todas as palavras devem estar em PORTUGUÊS DO BRASIL
-    - As palavras devem ser apropriadas para crianças e adolescentes
-    - As palavras devem ser relacionadas ao tema fornecido
-    - Evite palavras muito complexas ou técnicas
-    - Retorne EXATAMENTE 20 palavras no array
-    - Retorne APENAS um JSON válido no formato: {"words": ["palavra1", "palavra2", "palavra3", ..., "palavra20"]}
-    - NÃO adicione texto extra, apenas o JSON`;
+TAREFA
+Gerar EXATAMENTE 20 palavras de 5 letras relacionadas ao tema fornecido, fáceis e comuns no cotidiano brasileiro.
 
-    const userPrompt = `Tema: ${theme.trim()}\n\nGere EXATAMENTE 20 palavras de 5 letras relacionadas a este tema. Essas palavras devem ser palavras válidas em português do Brasil e devem ser fáceis de entender para crianças e adolescentes.`;
+PROIBIDO
+
+Palavrões, termos sexuais/violentos/discriminatórios.
+
+Nomes próprios, marcas, siglas, abreviações, onomatopeias.
+
+Palavras truncadas/cortadas para caber (ex.: “tubar” para “tubarão” é inválido).
+
+Tecnicalidades/arcaísmos/estrangeirismos pouco usados por crianças.
+
+REQUISITOS LINGUÍSTICOS
+
+Português do Brasil, ortografia correta (com acentos).
+
+Normalização Unicode NFC.
+
+Somente letras (nada de números, hífens, apóstrofos, espaços).
+
+Cada item deve ter exatamente 5 letras no sentido do usuário (uma letra acentuada conta como 1).
+
+VALIDAÇÃO INTERNA (obrigatória)
+Após normalizar para NFC, cada palavra deve corresponder à regex Unicode:
+^(?:\p{L}\p{M}*){5}$ (modo u).
+Se não corresponder, não inclua. Não repita itens. Todas devem ter relação clara com o tema.
+
+SAÍDA (APENAS JSON VÁLIDO, sem texto extra):
+{
+  "words": ["palavra1", "palavra2", "...", "palavra20"]
+}`;
+
+    const userPrompt = `Tema: ${theme.trim()}\n\nRetorne somente o JSON acima, com 20 itens que obedeçam a todas as regras.`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",

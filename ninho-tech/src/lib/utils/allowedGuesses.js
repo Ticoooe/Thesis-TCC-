@@ -4129,6 +4129,7 @@ export default [
   "pioro",
   "pipal",
   "piper",
+  "leiam",
   "pipia",
   "pipio",
   "pipis",
