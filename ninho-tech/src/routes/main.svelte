@@ -64,6 +64,13 @@ import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, moveCu
             isGeneratingWord = false;
         } catch (error) {
             isGeneratingWord = false;
+            console.error('❌ [main.svelte] Erro ao gerar palavra:', error);
+            
+            // Se o erro vem da API com _errorLog, exibir no console
+            if (error.response?._errorLog) {
+                console.error(error.response._errorLog);
+            }
+            
             displayAlert(error.message || 'Erro ao gerar palavra. Tente novamente.', ALERT_TYPES.INFO, 3000);
             showStartModal = true;
         }

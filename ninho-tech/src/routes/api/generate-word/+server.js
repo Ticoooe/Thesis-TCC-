@@ -26,7 +26,7 @@ export async function POST({ request }) {
     const systemPrompt = `Você é um gerador de palavras para um jogo educativo infantil em português do Brasil (público: 5 a 12 anos).
 
     TAREFA
-    Gerar palavras COMPLETAS de 5 letras relacionadas ao tema ${theme.trim()}.
+    Gerar palavras COMPLETAS de 5 letras relacionadas ao tema fornecido.
 
     ‼️ CRÍTICO - NÃO TRUNCAR PALAVRAS ‼️
     Cada palavra DEVE ser uma palavra COMPLETA e VÁLIDA do dicionário português brasileiro.
@@ -72,12 +72,18 @@ export async function POST({ request }) {
 
     Retorne APENAS o JSON com as palavras.`;
 
+    const userPrompt = `Tema: "${theme.trim()}"
+    
+    Gere pelo menos 20 e no máximo 30 palavras COMPLETAS de 5 letras relacionadas a este tema.
+    Lembre-se: palavras COMPLETAS que existem no dicionário, não cortes de palavras maiores.`;
+
     const response = await openai.chat.completions.create({
       model: "deepseek/deepseek-chat-v3.1",
       response_format: { type: 'json_object' },
       temperature: 0.9,
       messages: [
         { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
       ]
     });
 
@@ -125,9 +131,13 @@ export async function POST({ request }) {
     });
 
   } catch (err) {
+    console.error('❌ [+server.js] Erro ao gerar palavras:', err);
     const msg = err?.message || 'Erro ao gerar palavra';
     const status = /quota|rate|429/i.test(msg) ? 429 : 500;
-    return json({ error: msg }, { status });
+    return json({ 
+      error: msg,
+      _errorLog: `❌ Erro: ${msg}`
+    }, { status });
   }
 }
 
