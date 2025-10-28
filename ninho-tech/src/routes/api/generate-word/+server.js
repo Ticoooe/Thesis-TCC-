@@ -25,68 +25,66 @@ export async function POST({ request }) {
     
     const systemPrompt = `Você é um gerador de palavras para um jogo educativo infantil em português do Brasil (público: 5 a 12 anos).
 
-TAREFA
-Gerar palavras COMPLETAS de 5 letras relacionadas ao tema fornecido.
+    TAREFA
+    Gerar palavras COMPLETAS de 5 letras relacionadas ao tema ${theme.trim()}.
 
-‼️ CRÍTICO - NÃO TRUNCAR PALAVRAS ‼️
-Cada palavra DEVE ser uma palavra COMPLETA e VÁLIDA do dicionário português brasileiro.
-NÃO é permitido cortar/truncar palavras maiores para forçá-las a ter 5 letras.
+    ‼️ CRÍTICO - NÃO TRUNCAR PALAVRAS ‼️
+    Cada palavra DEVE ser uma palavra COMPLETA e VÁLIDA do dicionário português brasileiro.
+    NÃO é permitido cortar/truncar palavras maiores para forçá-las a ter 5 letras.
 
-EXEMPLOS DO QUE NÃO FAZER (❌ ERRADO):
-- "físic" (física cortada) ❌
-- "molec" (molécula cortada) ❌
-- "célul" (célula cortada) ❌
-- "biólo" (biologia cortada) ❌
-- "químc" (química cortada) ❌
-- "parti" (partícula cortada) ❌
+    EXEMPLOS DO QUE NÃO FAZER (❌ ERRADO):
+    - "físic" (física cortada) ❌
+    - "molec" (molécula cortada) ❌
+    - "célul" (célula cortada) ❌
+    - "biólo" (biologia cortada) ❌
+    - "químc" (química cortada) ❌
+    - "parti" (partícula cortada) ❌
 
-EXEMPLOS CORRETOS (✅ CERTO):
-- "átomo" (palavra completa de 5 letras) ✅
-- "corpo" (palavra completa de 5 letras) ✅
-- "campo" (palavra completa de 5 letras) ✅
-- "folha" (palavra completa de 5 letras) ✅
-- "terra" (palavra completa de 5 letras) ✅
-- "planta" (palavra completa de 6 letras, mas não use pois precisa ter exatamente 5) ❌
+    EXEMPLOS CORRETOS (✅ CERTO):
+    - "átomo" (palavra completa de 5 letras) ✅
+    - "corpo" (palavra completa de 5 letras) ✅
+    - "campo" (palavra completa de 5 letras) ✅
+    - "folha" (palavra completa de 5 letras) ✅
+    - "terra" (palavra completa de 5 letras) ✅
+    - "planta" (palavra completa de 6 letras, mas não use pois precisa ter exatamente 5) ❌
 
-TAMBÉM PROIBIDO
-- Palavrões, termos sexuais/violentos/discriminatórios
-- Nomes próprios, marcas, siglas, abreviações, onomatopeias
-- Tecnicalidades/arcaísmos/estrangeirismos pouco usados por crianças
+    TAMBÉM PROIBIDO
+    - Palavrões, termos sexuais/violentos/discriminatórios
+    - Nomes próprios, marcas, siglas, abreviações, onomatopeias
+    - Tecnicalidades/arcaísmos/estrangeirismos pouco usados por crianças
 
-REQUISITOS
-- Português do Brasil, ortografia correta (com acentos)
-- Somente letras (sem números, hífens, apóstrofos, espaços)
-- EXATAMENTE 5 letras (letra acentuada = 1 letra)
-- Palavras COMPLETAS que existem no dicionário
+    REQUISITOS
+    - Português do Brasil, ortografia correta (com acentos)
+    - Somente letras (sem números, hífens, apóstrofos, espaços)
+    - EXATAMENTE 5 letras (letra acentuada = 1 letra)
+    - Palavras COMPLETAS que existem no dicionário
 
-SAÍDA (APENAS JSON VÁLIDO):
-{
-  "words": ["palavra1", "palavra2", "...", "palavraN"]
-}`;
+    SAÍDA (APENAS JSON VÁLIDO):
+    {
+    "words": ["palavra1", "palavra2", "...", "palavraN"]
+    }
+    
+    IMPORTANTE: Gere no máximo 30 palavras COMPLETAS de 5 letras relacionadas ao tema.
+    Cada palavra DEVE existir no dicionário português brasileiro como está escrita.
+    NÃO corte palavras maiores. Use apenas palavras que NATURALMENTE têm 5 letras.
 
-    const userPrompt = `Tema: ${theme.trim()}
+    Exemplos de palavras boas: corpo, campo, folha, terra, átomo, livro, pedra, água, vento, fogo
 
-IMPORTANTE: Gere pelo menos 30 palavras COMPLETAS de 5 letras relacionadas ao tema.
-Cada palavra DEVE existir no dicionário português brasileiro como está escrita.
-NÃO corte palavras maiores. Use apenas palavras que NATURALMENTE têm 5 letras.
-
-Exemplos de palavras boas: corpo, campo, folha, terra, átomo, livro, pedra, água, vento, fogo
-
-Retorne APENAS o JSON com as 30 palavras.`;
+    Retorne APENAS o JSON com as palavras.`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "deepseek/deepseek-chat-v3.1",
       response_format: { type: 'json_object' },
       temperature: 0.9,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
       ]
     });
 
     const content = response.choices?.[0]?.message?.content || '{}';
     const data = JSON.parse(content);
     
+    // Logs para o servidor
     console.log('📝 [+server.js] Palavras recebidas da IA:', data.words?.length || 0);
     
     if (!data.words || !Array.isArray(data.words) || data.words.length === 0) {
@@ -116,7 +114,14 @@ Retorne APENAS o JSON com as 30 palavras.`;
     return json({ 
       word: selectedWord.toUpperCase(),
       allWords: validWords,
-      theme: theme.trim()
+      theme: theme.trim(),
+      _logs: {
+        receivedCount: data.words?.length || 0,
+        validCount: validWords.length,
+        totalReceived: data.words?.length || 0,
+        selectedWord: selectedWord.toUpperCase(),
+        allWords: validWords
+      }
     });
 
   } catch (err) {

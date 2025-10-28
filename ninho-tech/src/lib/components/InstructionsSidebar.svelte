@@ -5,7 +5,7 @@
 <div class="flex flex-col gap-2" transition:fade>
   <p>
     Bem-vindo ao <span class="font-bold">Ninho de Letras</span> — um jogo do
-    <span class="font-bold">Grupo Ninho</span> para fortalecer vocabulário, leitura e diversão em comunidade.
+    <span class="font-bold">Projeto Ninho</span> para fortalecer vocabulário, leitura e diversão em comunidade.
   </p>
 
   <p class="mt-1">
@@ -64,7 +64,7 @@
   </div>
 
   <p>
-    A letra <span class="font-bold">U</span> não está na palavra em nenhuma posição.
+    A letra <span class="font-bold">U</span> não está na palavra.
   </p>
   <div class="flex gap-1 mb-4">
     <div class="w-14 h-14 flex items-center justify-center border-2 border-gray-600">
@@ -76,7 +76,7 @@
     <div class="w-14 h-14 flex items-center justify-center border-2 border-gray-600">
       <span class="text-4xl font-bold">C</span>
     </div>
-    <div class="w-14 h-14 flex items-center justify-center border-2 bg-gray-600">
+    <div class="w-14 h-14 flex items-center justify-center border-2 bg-gray-liv600">
       <span class="text-4xl font-bold text-white">U</span>
     </div>
     <div class="w-14 h-14 flex items-center justify-center border-2 border-gray-600">
@@ -87,10 +87,10 @@
   <div class="border-[0.5px] my-2 border-gray-100"></div>
 
   <p class="font-bold">
-    Um novo <span class="font-bold">Ninho de Letras</span> fica disponível todos os dias.
+    Um novo <span class="font-bold">Ninho de Letras</span> fica disponível a cada novo jogo.
   </p>
   <p class="text-sm text-gray-600">
-    Dica do Grupo Ninho: jogue em roda com amigos, turma ou família.
+    Dica do Projeto Ninho: jogue em roda com amigos, turma ou família.
     <br/>
     Boa Sorte!
   </p>

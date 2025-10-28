@@ -50,10 +50,18 @@ import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, moveCu
         try {
             displayAlert(`Gerando palavra relacionada a: ${theme}...`, ALERT_TYPES.INFO, 3000);
             const result = await generateWordFromTheme(theme);
+            
+            // Exibir logs do servidor no console do navegador
+            if (result._logs) {
+                console.log('📝 [API] Palavras recebidas da IA:', result._logs.receivedCount);
+                console.log('✅ [API] Palavras válidas (5 letras):', result._logs.validCount, '/', result._logs.totalReceived);
+                console.log('🔤 [API] Palavras:', result._logs.allWords);
+                console.log('🎯 [API] Palavra selecionada:', result._logs.selectedWord);
+            }
+            
             await initializeGame(result.word);
             gameStarted = true;
             isGeneratingWord = false;
-            displayAlert(`Tema: ${theme} ✓`, ALERT_TYPES.SUCCESS, 2000);
         } catch (error) {
             isGeneratingWord = false;
             displayAlert(error.message || 'Erro ao gerar palavra. Tente novamente.', ALERT_TYPES.INFO, 3000);
@@ -144,6 +152,14 @@ import { deleteLetter, gameState, guessLetter, guessWord, initializeGame, moveCu
               >
                 ?
               </button>
+            {/if}
+
+            <!-- Theme badge - fixed on top right -->
+            {#if theme}
+              <div class="fixed top-4 right-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-full shadow-lg z-10 flex items-center gap-2">
+                <span class="text-sm font-semibold">📚 Tema:</span>
+                <span class="text-base font-bold">{theme}</span>
+              </div>
             {/if}
 
             <div class="flex-column items-center h-50">

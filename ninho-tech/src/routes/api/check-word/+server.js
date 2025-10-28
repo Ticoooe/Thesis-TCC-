@@ -14,8 +14,15 @@ export async function GET({ url }) {
     
     const data = await acadLetras.json();
     const isValid = data.rows && data.rows.length > 0;
+    
+    // Log para o servidor
+    console.log('🔍 [check-word] Verificando palavra:', word, '→', isValid ? '✅' : '❌');
         
-    return json({ valid: isValid, word: word.trim() });
+    return json({ 
+      valid: isValid, 
+      word: word.trim(),
+      _log: `🔍 [check-word] Verificando palavra: ${word} → ${isValid ? '✅' : '❌'}`
+    });
   } catch (error) {
     console.error('❌ [check-word] Erro ao verificar palavra:', error);
     return json({ valid: false, error: 'Erro ao verificar palavra' }, { status: 500 });

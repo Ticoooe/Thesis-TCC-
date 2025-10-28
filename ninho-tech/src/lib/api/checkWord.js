@@ -19,6 +19,12 @@ export async function checkWord(word) {
         }
         
         const data = await response.json();
+        
+        // Exibir log do servidor no console do navegador
+        if (data._log) {
+            console.log(data._log);
+        }
+        
         return data.valid || false;
     })();
     
